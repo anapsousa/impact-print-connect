@@ -1,54 +1,39 @@
 
-# Contador de Donativos + Opcoes de Acao na Pagina Inicial
+# Seccao de Introducao do Projeto na Pagina Inicial
 
 ## O que vamos fazer
 
-1. **Contador publico de donativos** no ProgressSection (junto aos outros stats)
-2. **Nova seccao de escolha** na pagina inicial entre "Imprimir 3D" e "Doar Dinheiro" (substituir ou complementar o CTA atual)
+Adicionar uma nova seccao "Sobre o Projeto" na pagina inicial, logo abaixo do HeroSection e antes do mapa. Tera uma foto (imagem do projeto/cadeira de rodas) e um texto curto a explicar o que e o PrintImpact Connect e a missao por detras.
 
----
+## Layout
+
+Uma seccao simples com:
+- Imagem a esquerda (ou em cima no mobile)
+- Texto a direita com titulo e 2-3 paragrafos curtos a explicar o projeto
+- Estilo visual consistente com o resto da app (cards, cores navy/esmeralda)
+
+O texto pode incluir:
+- O que e o projeto (impressao 3D distribuida de cadeiras de rodas)
+- A inspiracao (TMT / 3D-Mobility.org)
+- Como funciona de forma resumida
+- Quem esta por detras (Smart 3D / comunidade portuguesa)
+
+A imagem pode ser um placeholder por agora que facilmente se troca por uma foto real mais tarde.
 
 ## Detalhes Tecnicos
 
-### 1. Atualizar a view `dashboard_stats` no banco de dados
+### Ficheiros
 
-A view atual nao inclui dados de donativos. Vamos recria-la para adicionar:
-- `total_donations` -- numero total de donativos registados
-- `total_donated_cents` -- soma total em centimos
+1. **Novo: `src/components/AboutSection.tsx`**
+   - Componente com layout lado a lado (grid 2 colunas no desktop, stack no mobile)
+   - Imagem com `rounded-2xl` e sombra
+   - Titulo H2 + texto em paragrafos
+   - Possivel badge/tag tipo "Sobre o Projeto"
+   - Usar `motion.div` do Framer Motion para fade-in ao scroll (consistente com HeroSection)
 
-```sql
-CREATE OR REPLACE VIEW public.dashboard_stats AS
-SELECT
-  (SELECT count(*) FROM contributors) AS total_contributors,
-  (SELECT count(*) FROM wheelchair_projects) AS total_projects,
-  (SELECT count(*) FROM parts) AS total_parts,
-  (SELECT count(*) FROM parts WHERE status = 'complete') AS parts_completed,
-  (SELECT count(*) FROM parts WHERE status IN ('assigned','printing','printed','shipped')) AS parts_in_progress,
-  (SELECT count(*) FROM wheelchair_projects WHERE status = 'complete') AS wheelchairs_completed,
-  (SELECT count(*) FROM donations) AS total_donations,
-  (SELECT COALESCE(sum(amount_cents), 0) FROM donations) AS total_donated_cents;
-```
+2. **Editar: `src/pages/Index.tsx`**
+   - Importar e inserir `AboutSection` entre `HeroSection` e `RegionMap`
 
-### 2. ProgressSection -- adicionar metrica de donativos
+### Nota sobre a imagem
 
-Adicionar um 4o card na grelha de metricas:
-- Icone: Heart (ou Euro)
-- Label: "Total Doado"
-- Valor: formatar `total_donated_cents / 100` como euros (ex: "150€")
-
-### 3. HeroSection ou nova seccao -- dual CTA
-
-Atualizar a seccao CTA (ou a HeroSection) para apresentar duas opcoes claras lado a lado:
-- **Card 1**: "Tenho uma impressora 3D" -> link para `/contribute`
-- **Card 2**: "Quero ajudar com donativo" -> link para `/donate`
-- Manter tambem o link "Pedir Ajuda" para `/request`
-
-Vamos adicionar isto como uma nova seccao entre o ProgressSection e o CTASection existente, com dois cards visuais grandes.
-
-### Ficheiros afetados
-
-1. `supabase/migrations/` -- recriar view dashboard_stats com colunas de donativos
-2. `src/hooks/useDashboardStats.ts` -- tipos ja vao ser atualizados automaticamente
-3. `src/components/ProgressSection.tsx` -- adicionar metrica de donativos
-4. `src/pages/Index.tsx` -- adicionar nova seccao de escolha dual
-5. Novo ficheiro `src/components/DualCTASection.tsx` -- seccao com os dois cards de acao
+Por agora usamos uma imagem placeholder (ou o `/placeholder.svg` que ja existe no projeto). O utilizador pode depois facilmente trocar por uma foto real do projeto carregando uma imagem.
