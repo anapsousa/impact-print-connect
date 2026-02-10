@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Target, TrendingUp, Package } from "lucide-react";
+import { Target, TrendingUp, Package, Heart } from "lucide-react";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 
 const ProgressSection = () => {
@@ -34,11 +34,12 @@ const ProgressSection = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
               { icon: Target, label: "Peças em Progresso", value: stats?.parts_in_progress ?? 0, color: "text-accent" },
               { icon: TrendingUp, label: "Total de Peças", value: stats?.total_parts ?? 0, color: "text-emerald-light" },
               { icon: Package, label: "Peças Concluídas", value: stats?.parts_completed ?? 0, color: "text-navy-light" },
+              { icon: Heart, label: "Total Doado", value: `${Math.floor(((stats as any)?.total_donated_cents ?? 0) / 100)}€`, color: "text-rose-500" },
             ].map((metric) => (
               <div key={metric.label} className="flex items-center gap-3 p-4 rounded-xl bg-muted/60">
                 <metric.icon className={`w-5 h-5 ${metric.color} shrink-0`} />

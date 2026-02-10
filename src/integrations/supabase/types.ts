@@ -329,6 +329,8 @@ export type Database = {
           parts_completed: number | null
           parts_in_progress: number | null
           total_contributors: number | null
+          total_donated_cents: number | null
+          total_donations: number | null
           total_parts: number | null
           total_projects: number | null
           wheelchairs_completed: number | null
