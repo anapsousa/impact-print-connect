@@ -1,66 +1,45 @@
 
-# Plano: Fluxo Completo de Gestao - PrintImpact Connect
+# Materiais, Telefone e Agrupamento Geografico
 
-## Problemas Identificados
+## O que muda para si
 
-1. **A utilizadora Ana nao tem role de admin** - Precisa de ser atribuida para aceder ao Centro de Comando
-2. **Nao e possivel adicionar voluntarios manualmente** no painel de administracao - apenas via formulario publico
-3. **Sem filtros por regiao/impressora** no separador de voluntarios do admin
-4. **Sem filtro por regiao na atribuicao de pecas** - quando se atribui um voluntario a uma peca, nao ha indicacao da regiao/impressora para facilitar a decisao
-5. **Sem possibilidade de eliminar projetos** ou alterar o estado do projeto (Planeamento/Ativo/Concluido)
-6. **Politicas RLS dos contributors demasiado permissivas** - qualquer pessoa pode ver todos os registos
-
-## O Que Vai Mudar
-
-### 1. Atribuir role de admin a Ana
-- Inserir registo na tabela `user_roles` para a utilizadora existente (anapsousa@gmail.com)
-
-### 2. Adicionar voluntarios manualmente no admin
-- Novo formulario no separador "Voluntarios" com campos: Nome, Email, Localizacao, Regiao, Impressora, Disponibilidade, Pode Enviar
-- Permite ao organizador registar voluntarios que contactaram por outros canais
-
-### 3. Filtros no separador de Voluntarios
-- Filtro por regiao (dropdown com regioes de Portugal)
-- Filtro por modelo de impressora
-- Pesquisa por nome
-- Os filtros atualizam a tabela em tempo real
-
-### 4. Melhorar atribuicao de pecas com contexto geografico
-- No dropdown de atribuicao de voluntarios a pecas, mostrar a regiao ao lado do nome
-- Agrupar voluntarios por regiao no dropdown para facilitar a escolha de voluntarios proximos
-
-### 5. Gestao de estado e eliminacao de projetos
-- Dropdown para alterar o estado do projeto (Planeamento -> Ativo -> Concluido)
-- Botao para eliminar projeto (com confirmacao)
-
-### 6. Corrigir RLS dos contributors
-- Manter SELECT aberto para organizadores (via `is_organizer()`)
-- Restringir SELECT para contribuidores ao seu proprio registo (via token)
-- UPDATE restrito ao proprio registo via token
+1. **Novo passo no formulario de contribuicao** - Pergunta se o voluntario imprime TPU, PETG ou ambos
+2. **Telefone opcional** - Campo de telefone adicionado ao formulario e ao dialogo de adicao manual no admin
+3. **Informacao de materiais visivel no admin** - Ao atribuir pecas, ve-se que materiais cada voluntario imprime, para nao atribuir uma peca TPU a quem so imprime PETG
+4. **Agrupamento por regiao no admin** - No separador de voluntarios, os voluntarios aparecem agrupados por regiao (Norte, Centro, Lisboa, etc.) para facilitar a alocacao
 
 ## Detalhes Tecnicos
 
-### Migracao SQL
-- INSERT na tabela `user_roles` para Ana (user_id: a33b4365-b5ff-472b-8bc7-474ce31a399d, role: admin)
-- Atualizar RLS policies na tabela `contributors`:
-  - SELECT: `is_organizer() OR (token = current_setting('request.headers')::json->>'x-contributor-token')` -- simplificado para manter SELECT true pois e necessario para o formulario publico e portal
-  - Na pratica, manter as politicas atuais pois o formulario de contribuicao e o portal precisam de acesso
+### 1. Migracao SQL
+Adicionar duas colunas a tabela `contributors`:
+- `phone` (text, nullable) - numero de telefone opcional
+- `materials` (text[], default `'{PETG}'`) - array com os materiais que imprime (PETG, TPU, ou ambos)
 
-### Alteracoes em Admin.tsx
-- Separador "Voluntarios": adicionar barra de filtros (regiao, impressora, pesquisa) e botao "Adicionar Voluntario"
-- Dialog/modal para criar voluntario manualmente
-- Separador "Projetos": adicionar dropdown de estado no `ProjectProgressCard` e botao de eliminar
+### 2. Formulario de contribuicao (`Contribute.tsx`)
+- Adicionar **passo 3.5** (entre Impressora e Disponibilidade): "Que materiais imprime?" com opcoes PETG, TPU ou Ambos (selecao visual como a disponibilidade)
+- Adicionar campo de telefone opcional no passo 6 (Ativar), junto ao email
+- Enviar `materials` e `phone` no insert
 
-### Alteracoes em PartAssignmentSelect.tsx
-- Mostrar regiao e modelo de impressora ao lado do nome do voluntario
-- Agrupar por regiao usando `SelectGroup` e `SelectLabel`
+### 3. Dialogo de adicao manual (`AddContributorDialog.tsx`)
+- Adicionar campo de telefone (opcional)
+- Adicionar selecao de materiais (PETG/TPU/Ambos)
 
-### Novo componente
-- `src/components/admin/AddContributorDialog.tsx` - Modal com formulario para adicionar voluntario
+### 4. Atribuicao de pecas (`PartAssignmentSelect.tsx`)
+- Mostrar badge de materiais (PETG/TPU) ao lado do nome do voluntario no dropdown
+- Filtrar automaticamente: quando a peca e TPU, destacar ou priorizar voluntarios que imprimem TPU
+
+### 5. Tabela de voluntarios no admin (`Admin.tsx`)
+- Adicionar coluna "Materiais" com badges PETG/TPU
+- Adicionar coluna "Telefone" (se disponivel)
+- Agrupar voluntarios por regiao com separadores visuais (headers de grupo) na tabela
+
+### 6. Filtros (`ContributorsFilters.tsx`)
+- Adicionar filtro por material (Todos / PETG / TPU)
 
 ### Ficheiros afetados
-1. `supabase/migrations/` - Nova migracao para role de admin
-2. `src/pages/Admin.tsx` - Filtros, formulario de voluntario, gestao de estado de projetos
-3. `src/components/admin/PartAssignmentSelect.tsx` - Contexto geografico no dropdown
-4. `src/components/admin/ProjectProgressCard.tsx` - Dropdown de estado e botao eliminar
-5. `src/components/admin/AddContributorDialog.tsx` - Novo componente
+1. `supabase/migrations/` - Nova migracao (phone + materials)
+2. `src/pages/Contribute.tsx` - Novo passo de materiais + campo telefone
+3. `src/components/admin/AddContributorDialog.tsx` - Campos telefone e materiais
+4. `src/components/admin/PartAssignmentSelect.tsx` - Mostrar materiais, filtrar por compatibilidade
+5. `src/components/admin/ContributorsFilters.tsx` - Filtro por material
+6. `src/pages/Admin.tsx` - Coluna materiais/telefone na tabela, agrupamento por regiao
