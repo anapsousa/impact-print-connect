@@ -8,6 +8,8 @@ import Contribute from "./pages/Contribute";
 import Portal from "./pages/Portal";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
+import Donate from "./pages/Donate";
+import Request from "./pages/Request";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +26,8 @@ const App = () => (
           <Route path="/portal" element={<Portal />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/donate" element={<Donate />} />
+          <Route path="/request" element={<Request />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      beneficiary_requests: {
+        Row: {
+          beneficiary_age: string
+          beneficiary_type: string
+          contact_email: string
+          contact_name: string
+          contact_phone: string | null
+          created_at: string
+          description: string
+          how_found_us: string | null
+          id: string
+          notes: string | null
+          region: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          beneficiary_age: string
+          beneficiary_type?: string
+          contact_email: string
+          contact_name: string
+          contact_phone?: string | null
+          created_at?: string
+          description: string
+          how_found_us?: string | null
+          id?: string
+          notes?: string | null
+          region?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          beneficiary_age?: string
+          beneficiary_type?: string
+          contact_email?: string
+          contact_name?: string
+          contact_phone?: string | null
+          created_at?: string
+          description?: string
+          how_found_us?: string | null
+          id?: string
+          notes?: string | null
+          region?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contributors: {
         Row: {
           availability: string
@@ -74,6 +122,39 @@ export type Database = {
           turnaround_time?: string | null
           updated_at?: string
           willing_to_collaborate?: boolean
+        }
+        Relationships: []
+      }
+      donations: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          donor_email: string | null
+          donor_name: string | null
+          id: string
+          message: string | null
+          method: string
+          public_name: boolean
+        }
+        Insert: {
+          amount_cents?: number
+          created_at?: string
+          donor_email?: string | null
+          donor_name?: string | null
+          id?: string
+          message?: string | null
+          method?: string
+          public_name?: boolean
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          donor_email?: string | null
+          donor_name?: string | null
+          id?: string
+          message?: string | null
+          method?: string
+          public_name?: boolean
         }
         Relationships: []
       }

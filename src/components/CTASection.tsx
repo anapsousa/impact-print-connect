@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, Heart, Accessibility } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 
@@ -33,15 +33,29 @@ const CTASection = () => {
             a projetos de cadeiras de rodas que precisam das suas competências.
           </p>
 
-          <Link to="/contribute">
-            <Button
-              size="lg"
-              className="bg-accent text-accent-foreground hover:bg-emerald-light btn-lift font-bold text-base px-8 py-6 rounded-xl glow-accent"
-            >
-              Juntar-me à Missão
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link to="/contribute">
+              <Button
+                size="lg"
+                className="bg-accent text-accent-foreground hover:bg-emerald-light btn-lift font-bold text-base px-8 py-6 rounded-xl glow-accent"
+              >
+                Juntar-me à Missão
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
+            <div className="flex gap-3">
+              <Link to="/donate">
+                <Button size="lg" variant="outline" className="border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10 py-6">
+                  <Heart className="w-4 h-4 mr-2" /> Doar
+                </Button>
+              </Link>
+              <Link to="/request">
+                <Button size="lg" variant="outline" className="border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10 py-6">
+                  <Accessibility className="w-4 h-4 mr-2" /> Pedir Ajuda
+                </Button>
+              </Link>
+            </div>
+          </div>
         </div>
       </motion.div>
     </section>
