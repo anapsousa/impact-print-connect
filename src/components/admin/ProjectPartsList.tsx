@@ -25,7 +25,7 @@ interface Part {
 interface Contributor {
   id: string;
   name: string;
-  printer_model: string;
+  printer_models: string[];
   region?: string;
 }
 

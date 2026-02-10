@@ -11,7 +11,7 @@ import {
 interface Contributor {
   id: string;
   name: string;
-  printer_model: string;
+  printer_models: string[];
   region?: string;
   materials?: string[];
   experience_level?: string;
@@ -70,7 +70,7 @@ const PartAssignmentSelect = ({ value, contributors, onAssign, disabled }: PartA
               const volWarn = c.build_volume_ok === false ? " ⚠️" : "";
               return (
                 <SelectItem key={c.id} value={c.id}>
-                  {expLabel}{c.name} · {c.printer_model} {c.materials?.length ? `· ${c.materials.join("/")}` : ""}{volWarn}
+                  {expLabel}{c.name} · {c.printer_models?.join(", ") || "—"} {c.materials?.length ? `· ${c.materials.join("/")}` : ""}{volWarn}
                 </SelectItem>
               );
             })}

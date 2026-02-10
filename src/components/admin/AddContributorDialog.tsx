@@ -65,7 +65,7 @@ const AddContributorDialog = () => {
     email: "",
     location: "",
     region: "centro",
-    printer_model: "",
+    printer_models: [] as string[],
     availability: "Disponível",
     can_ship: false,
     phone: "",
@@ -77,10 +77,10 @@ const AddContributorDialog = () => {
   });
 
   const resetForm = () =>
-    setForm({ name: "", email: "", location: "", region: "centro", printer_model: "", availability: "Disponível", can_ship: false, phone: "", materials: ["PETG"], build_volume_ok: false, experience_level: "intermediate", turnaround_time: "", willing_to_collaborate: false });
+    setForm({ name: "", email: "", location: "", region: "centro", printer_models: [], availability: "Disponível", can_ship: false, phone: "", materials: ["PETG"], build_volume_ok: false, experience_level: "intermediate", turnaround_time: "", willing_to_collaborate: false });
 
   const handleSave = async () => {
-    if (!form.name.trim() || !form.email.trim() || !form.location.trim() || !form.printer_model) {
+    if (!form.name.trim() || !form.email.trim() || !form.location.trim() || !form.printer_models.length) {
       toast({ title: "Campos obrigatórios", description: "Preencha nome, email, localização e impressora.", variant: "destructive" });
       return;
     }
@@ -90,7 +90,7 @@ const AddContributorDialog = () => {
       email: form.email.trim(),
       location: form.location.trim(),
       region: form.region,
-      printer_model: form.printer_model,
+      printer_models: form.printer_models,
       availability: form.availability,
       can_ship: form.can_ship,
       phone: form.phone.trim() || null,
@@ -151,15 +151,18 @@ const AddContributorDialog = () => {
             </div>
           </div>
           <div className="grid gap-1.5">
-            <Label>Impressora *</Label>
-            <Select value={form.printer_model} onValueChange={(v) => setForm({ ...form, printer_model: v })}>
-              <SelectTrigger><SelectValue placeholder="Selecionar modelo" /></SelectTrigger>
-              <SelectContent>
-                {PRINTER_MODELS.map((m) => (
-                  <SelectItem key={m} value={m}>{m}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label>Impressora(s) * <span className="text-xs text-muted-foreground font-normal">({form.printer_models.length} selecionada{form.printer_models.length !== 1 ? "s" : ""})</span></Label>
+            <div className="max-h-[160px] overflow-y-auto space-y-1 border border-border rounded-md p-2">
+              {PRINTER_MODELS.map((m) => (
+                <button key={m} type="button" onClick={() => {
+                  const has = form.printer_models.includes(m);
+                  setForm({ ...form, printer_models: has ? form.printer_models.filter((p) => p !== m) : [...form.printer_models, m] });
+                }}
+                  className={`w-full text-left px-3 py-1.5 rounded-md text-sm transition-all ${
+                    form.printer_models.includes(m) ? "bg-accent/10 text-accent font-medium" : "text-foreground hover:bg-muted/50"
+                  }`}>{m}</button>
+              ))}
+            </div>
           </div>
           <div className="grid gap-1.5">
             <Label htmlFor="phone">Telefone</Label>
