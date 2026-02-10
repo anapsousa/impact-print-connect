@@ -97,12 +97,12 @@ const Admin = () => {
     enabled: !!user,
   });
 
-  const printerModels = useMemo(() => [...new Set(contributors.map((c) => c.printer_model))].sort(), [contributors]);
+  const printerModels = useMemo(() => [...new Set(contributors.flatMap((c) => (c as any).printer_models ?? []))].sort(), [contributors]);
   const filteredContributors = useMemo(() => {
     return contributors.filter((c) => {
       if (filterSearch && !c.name.toLowerCase().includes(filterSearch.toLowerCase())) return false;
       if (filterRegion !== "all" && c.region !== filterRegion) return false;
-      if (filterPrinter !== "all" && c.printer_model !== filterPrinter) return false;
+      if (filterPrinter !== "all" && !((c as any).printer_models ?? []).includes(filterPrinter)) return false;
       if (filterMaterial !== "all" && !(c as any).materials?.includes(filterMaterial)) return false;
       if (filterExperience !== "all" && (c as any).experience_level !== filterExperience) return false;
       if (filterBuildVolume === "ok" && !(c as any).build_volume_ok) return false;
@@ -247,7 +247,7 @@ const Admin = () => {
                       <div key={c.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                         <div>
                           <p className="text-sm font-medium text-foreground">{c.name}</p>
-                          <p className="text-xs text-muted-foreground">{c.location} · {c.printer_model}</p>
+                          <p className="text-xs text-muted-foreground">{c.location} · {((c as any).printer_models ?? []).join(", ") || "—"}</p>
                         </div>
                         <Badge variant="secondary" className="text-xs">{c.region}</Badge>
                       </div>
@@ -353,7 +353,7 @@ const Admin = () => {
                                   <p className="text-xs text-muted-foreground">{c.email}</p>
                                 </td>
                                 <td className="p-4 text-muted-foreground">{c.location}</td>
-                                <td className="p-4 text-muted-foreground hidden sm:table-cell">{c.printer_model}</td>
+                                <td className="p-4 text-muted-foreground hidden sm:table-cell">{((c as any).printer_models ?? []).join(", ") || "—"}</td>
                                 <td className="p-4 hidden sm:table-cell">
                                   <div className="flex gap-1">
                                     {((c as any).materials ?? ["PETG"]).map((m: string) => (
@@ -449,7 +449,7 @@ const Admin = () => {
                           </p>
                         </div>
                       </div>
-                      <ProjectPartsList parts={selectedParts} contributors={contributors} />
+                      <ProjectPartsList parts={selectedParts} contributors={contributors as any} />
                     </div>
                   ) : (
                     <div className="bg-card rounded-2xl border border-border p-12 flex items-center justify-center">

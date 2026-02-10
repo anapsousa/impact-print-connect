@@ -75,7 +75,7 @@ export type Database = {
           materials: string[]
           name: string
           phone: string | null
-          printer_model: string
+          printer_models: string[] | null
           region: string
           shipping_carrier: string | null
           token: string
@@ -95,7 +95,7 @@ export type Database = {
           materials?: string[]
           name: string
           phone?: string | null
-          printer_model: string
+          printer_models?: string[] | null
           region?: string
           shipping_carrier?: string | null
           token?: string
@@ -115,7 +115,7 @@ export type Database = {
           materials?: string[]
           name?: string
           phone?: string | null
-          printer_model?: string
+          printer_models?: string[] | null
           region?: string
           shipping_carrier?: string | null
           token?: string

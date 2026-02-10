@@ -79,7 +79,7 @@ const turnaroundOptions = [
 const Contribute = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
-    name: "", location: "", region: "centro", printer: "", materials: [] as string[],
+    name: "", location: "", region: "centro", printers: [] as string[], materials: [] as string[],
     availability: "", canShip: false, shippingCarrier: "", email: "", phone: "",
     buildVolumeOk: false, experienceLevel: "intermediate", turnaroundTime: "", willingToCollaborate: false,
   });
@@ -97,7 +97,7 @@ const Contribute = () => {
     switch (currentStep) {
       case 1: return formData.name.trim().length > 0;
       case 2: return formData.location.trim().length > 0 && formData.region.length > 0;
-      case 3: return formData.printer.length > 0;
+      case 3: return formData.printers.length > 0;
       case 4: return formData.materials.length > 0;
       case 5: return formData.experienceLevel.length > 0;
       case 6: return formData.availability.length > 0;
@@ -119,7 +119,7 @@ const Contribute = () => {
       email: formData.email.trim(),
       location: formData.location.trim(),
       region: formData.region,
-      printer_model: formData.printer,
+      printer_models: formData.printers,
       materials: formData.materials,
       availability: formData.availability,
       can_ship: formData.canShip,
@@ -239,17 +239,40 @@ const Contribute = () => {
                 {currentStep === 3 && (
                   <div className="space-y-4">
                     <div>
-                      <Label className="text-base font-bold text-foreground">Que impressora tem?</Label>
-                      <p className="text-sm text-muted-foreground mt-1 mb-3">Isto ajuda-nos a determinar que peças pode imprimir.</p>
+                      <Label className="text-base font-bold text-foreground">Que impressora(s) tem?</Label>
+                      <p className="text-sm text-muted-foreground mt-1 mb-3">Selecione todas as impressoras que pode usar. Isto ajuda-nos a determinar que peças pode imprimir.</p>
                     </div>
-                    <Select value={formData.printer} onValueChange={(v) => updateField("printer", v)}>
-                      <SelectTrigger className="text-base py-5"><SelectValue placeholder="Selecionar modelo de impressora" /></SelectTrigger>
-                      <SelectContent>
-                        {printerModels.map((model) => (
-                          <SelectItem key={model} value={model}>{model}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="max-h-[240px] overflow-y-auto space-y-1 pr-1">
+                      {(() => {
+                        const grouped: Record<string, string[]> = {};
+                        printerModels.forEach((m) => {
+                          const brand = m.split(" ")[0];
+                          if (!grouped[brand]) grouped[brand] = [];
+                          grouped[brand].push(m);
+                        });
+                        return Object.entries(grouped).map(([brand, models]) => (
+                          <div key={brand} className="mb-2">
+                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1 sticky top-0 bg-card py-1">{brand}</p>
+                            <div className="space-y-1">
+                              {models.map((model) => (
+                                <button key={model} onClick={() => {
+                                  setFormData((prev) => {
+                                    const has = prev.printers.includes(model);
+                                    return { ...prev, printers: has ? prev.printers.filter((p) => p !== model) : [...prev.printers, model] };
+                                  });
+                                }}
+                                  className={`w-full text-left px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-200 ${
+                                    formData.printers.includes(model) ? "bg-accent/10 border-accent/30 text-accent" : "bg-background border-border text-foreground hover:border-accent/20"
+                                  }`}>{model}</button>
+                              ))}
+                            </div>
+                          </div>
+                        ));
+                      })()}
+                    </div>
+                    {formData.printers.length > 0 && (
+                      <p className="text-xs text-accent font-medium">{formData.printers.length} impressora(s) selecionada(s)</p>
+                    )}
                     <div className="mt-4 p-3 bg-muted/50 rounded-xl border border-border">
                       <div className="flex items-start gap-3">
                         <Checkbox id="buildVolume" checked={formData.buildVolumeOk} onCheckedChange={(v) => updateField("buildVolumeOk", !!v)} className="mt-0.5" />

@@ -31,6 +31,9 @@ const Portal = () => {
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [saving, setSaving] = useState(false);
+  const [recoveryEmail, setRecoveryEmail] = useState("");
+  const [recovering, setRecovering] = useState(false);
+  const [recoveryError, setRecoveryError] = useState<string | null>(null);
   const { toast } = useToast();
   const [assignedParts, setAssignedParts] = useState<any[]>([]);
 
@@ -90,20 +93,52 @@ const Portal = () => {
     );
   }
 
+  const handleRecovery = async () => {
+    if (!recoveryEmail.includes("@")) return;
+    setRecovering(true);
+    setRecoveryError(null);
+    const { data, error: err } = await supabase
+      .from("contributors").select("token").eq("email", recoveryEmail.trim().toLowerCase()).maybeSingle();
+    if (err || !data) {
+      setRecoveryError("Não encontrámos nenhum voluntário com esse email. Verifique ou inscreva-se.");
+    } else {
+      window.location.href = `/portal?token=${data.token}`;
+    }
+    setRecovering(false);
+  };
+
   if (error || !contributor) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="pt-32 pb-20 px-6 flex items-center justify-center min-h-[70vh]">
           <div className="text-center max-w-md">
-            <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-            <h1 className="text-2xl font-black text-foreground mb-2">Acesso Negado</h1>
-            <p className="text-muted-foreground mb-6">{error}</p>
-            <Link to="/contribute">
-              <Button className="bg-accent text-accent-foreground hover:bg-emerald-light btn-lift font-semibold">
-                Juntar-me à Missão
+            <Mail className="w-12 h-12 text-accent mx-auto mb-4" />
+            <h1 className="text-2xl font-black text-foreground mb-2">Aceder ao Meu Portal</h1>
+            <p className="text-muted-foreground mb-6">Introduza o email com que se inscreveu para aceder ao seu portal de voluntário.</p>
+            <div className="space-y-3 text-left">
+              <Input
+                type="email"
+                placeholder="o.seu.email@exemplo.com"
+                value={recoveryEmail}
+                onChange={(e) => setRecoveryEmail(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleRecovery()}
+                className="text-base py-5"
+              />
+              {recoveryError && (
+                <p className="text-sm text-destructive flex items-center gap-1.5">
+                  <AlertCircle className="w-4 h-4" /> {recoveryError}
+                </p>
+              )}
+              <Button onClick={handleRecovery} disabled={recovering || !recoveryEmail.includes("@")} className="w-full bg-accent text-accent-foreground hover:bg-emerald-light btn-lift font-semibold">
+                {recovering ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+                Aceder ao Portal
               </Button>
-            </Link>
+            </div>
+            <p className="text-xs text-muted-foreground mt-6">
+              Ainda não se inscreveu?{" "}
+              <Link to="/contribute" className="text-accent hover:underline font-medium">Juntar-me à Missão</Link>
+            </p>
           </div>
         </div>
         <Footer />
@@ -120,7 +155,7 @@ const Portal = () => {
   const fields = [
     { key: "name", label: "Nome", icon: Mail, value: contributor.name },
     { key: "location", label: "Localização", icon: MapPin, value: contributor.location },
-    { key: "printer_model", label: "Impressora", icon: Printer, value: contributor.printer_model },
+    { key: "printer_models", label: "Impressora(s)", icon: Printer, value: ((contributor as any).printer_models ?? []).join(", ") || "—", editable: false },
     { key: "experience_level", label: "Experiência", icon: Star, value: experienceLabels[(contributor as any).experience_level] || "Intermédio", editable: false },
     { key: "availability", label: "Disponibilidade", icon: Calendar, value: contributor.availability },
     { key: "turnaround_time", label: "Tempo de entrega", icon: Clock, value: (contributor as any).turnaround_time || "Não definido" },
