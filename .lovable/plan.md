@@ -1,39 +1,63 @@
 
-# Seccao de Introducao do Projeto na Pagina Inicial
+# Recuperacao do Portal + Multiplas Impressoras
 
 ## O que vamos fazer
 
-Adicionar uma nova seccao "Sobre o Projeto" na pagina inicial, logo abaixo do HeroSection e antes do mapa. Tera uma foto (imagem do projeto/cadeira de rodas) e um texto curto a explicar o que e o PrintImpact Connect e a missao por detras.
+1. **Recuperar acesso ao portal por email** -- quando alguem vai a `/portal` sem token (ou com token invalido), em vez de so mostrar erro, mostra um formulario simples para inserir o email e receber o link do portal.
+2. **Selecao de multiplas impressoras** -- permitir que os voluntarios selecionem mais do que uma impressora 3D no formulario de inscricao e no painel admin.
 
-## Layout
+---
 
-Uma seccao simples com:
-- Imagem a esquerda (ou em cima no mobile)
-- Texto a direita com titulo e 2-3 paragrafos curtos a explicar o projeto
-- Estilo visual consistente com o resto da app (cards, cores navy/esmeralda)
+## 1. Recuperacao do Portal
 
-O texto pode incluir:
-- O que e o projeto (impressao 3D distribuida de cadeiras de rodas)
-- A inspiracao (TMT / 3D-Mobility.org)
-- Como funciona de forma resumida
-- Quem esta por detras (Smart 3D / comunidade portuguesa)
+### Como funciona
 
-A imagem pode ser um placeholder por agora que facilmente se troca por uma foto real mais tarde.
+Na pagina `/portal`, quando nao ha token ou e invalido:
+- Mostra um formulario com campo de email
+- Ao submeter, faz lookup na tabela `contributors` pelo email
+- Se encontrar, mostra o link do portal diretamente na pagina (ou redireciona)
+- Se nao encontrar, mostra mensagem de erro amigavel
 
-## Detalhes Tecnicos
+Sem necessidade de enviar emails -- mostra o link diretamente apos validar o email. Isto e seguro porque o portal so mostra dados do proprio voluntario.
 
-### Ficheiros
+### Ficheiros afetados
 
-1. **Novo: `src/components/AboutSection.tsx`**
-   - Componente com layout lado a lado (grid 2 colunas no desktop, stack no mobile)
-   - Imagem com `rounded-2xl` e sombra
-   - Titulo H2 + texto em paragrafos
-   - Possivel badge/tag tipo "Sobre o Projeto"
-   - Usar `motion.div` do Framer Motion para fade-in ao scroll (consistente com HeroSection)
+- **`src/pages/Portal.tsx`** -- Adicionar formulario de recuperacao na secao de erro (quando nao ha token)
 
-2. **Editar: `src/pages/Index.tsx`**
-   - Importar e inserir `AboutSection` entre `HeroSection` e `RegionMap`
+---
 
-### Nota sobre a imagem
+## 2. Multiplas Impressoras
 
-Por agora usamos uma imagem placeholder (ou o `/placeholder.svg` que ja existe no projeto). O utilizador pode depois facilmente trocar por uma foto real do projeto carregando uma imagem.
+### Alteracoes na base de dados
+
+Converter a coluna `printer_model` (text) para `printer_models` (text array), com migracao que preserva dados existentes:
+
+```sql
+ALTER TABLE contributors ADD COLUMN printer_models text[] DEFAULT '{}';
+UPDATE contributors SET printer_models = ARRAY[printer_model] WHERE printer_model IS NOT NULL;
+ALTER TABLE contributors DROP COLUMN printer_model;
+```
+
+### Alteracoes no formulario de inscricao (`Contribute.tsx`)
+
+- Mudar `formData.printer` de `string` para `string[]`
+- Trocar o `Select` (single) por botoes toggle (como ja fazemos para materiais)
+- Agrupar impressoras por marca para facilitar a navegacao
+- Atualizar a validacao e o insert para usar array
+
+### Alteracoes no Portal (`Portal.tsx`)
+
+- Mostrar lista de impressoras em vez de uma so
+
+### Alteracoes no Admin
+
+- **`AddContributorDialog.tsx`** -- Mudar select de impressora para multi-select
+- **`Admin.tsx`** -- Atualizar display de impressoras nos cards/tabelas de voluntarios
+
+### Ficheiros afetados
+
+1. `supabase/migrations/` -- Migracao para converter coluna
+2. `src/pages/Contribute.tsx` -- Multi-select de impressoras
+3. `src/pages/Portal.tsx` -- Recuperacao por email + display de multiplas impressoras
+4. `src/components/admin/AddContributorDialog.tsx` -- Multi-select de impressoras
+5. `src/pages/Admin.tsx` -- Display de multiplas impressoras (se aplicavel)
