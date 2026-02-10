@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Printer, Users, Target, LogOut, Plus, Loader2,
-  BarChart3, Package, Armchair, ChevronLeft,
+  BarChart3, Package, Armchair, ChevronLeft, Heart, Accessibility,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
@@ -24,7 +24,7 @@ const Admin = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: stats } = useDashboardStats();
-  const [activeTab, setActiveTab] = useState<"overview" | "contributors" | "projects">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "contributors" | "projects" | "requests" | "donations">("overview");
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [filterSearch, setFilterSearch] = useState("");
   const [filterRegion, setFilterRegion] = useState("all");
@@ -63,6 +63,26 @@ const Admin = () => {
       const { data, error } = await supabase.from("parts").select("*");
       if (error) throw error;
       return data;
+    },
+    enabled: !!user,
+  });
+
+  const { data: beneficiaryRequests = [], isLoading: requestsLoading } = useQuery({
+    queryKey: ["admin-beneficiary-requests"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("beneficiary_requests" as any).select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as any[];
+    },
+    enabled: !!user,
+  });
+
+  const { data: donations = [], isLoading: donationsLoading } = useQuery({
+    queryKey: ["admin-donations"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("donations" as any).select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as any[];
     },
     enabled: !!user,
   });
@@ -161,6 +181,8 @@ const Admin = () => {
     { id: "overview" as const, label: "Visão Geral", icon: BarChart3 },
     { id: "contributors" as const, label: "Voluntários", icon: Users },
     { id: "projects" as const, label: "Projetos", icon: Armchair },
+    { id: "requests" as const, label: "Pedidos", icon: Accessibility },
+    { id: "donations" as const, label: "Donativos", icon: Heart },
   ];
 
   const getProjectParts = (projectId: string) => parts.filter((p) => p.project_id === projectId);
@@ -439,6 +461,114 @@ const Admin = () => {
                   )}
                 </div>
               </div>
+            </div>
+          )}
+
+          {activeTab === "requests" && (
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">Pedidos de Beneficiários ({beneficiaryRequests.length})</h3>
+              {requestsLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground mx-auto" />
+              ) : beneficiaryRequests.length === 0 ? (
+                <div className="bg-card rounded-2xl border border-border p-12 text-center">
+                  <Accessibility className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+                  <p className="text-sm text-muted-foreground">Ainda sem pedidos de ajuda.</p>
+                </div>
+              ) : (
+                <div className="bg-card rounded-2xl border border-border overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border bg-muted/30">
+                          <th className="text-left p-4 font-semibold text-foreground">Nome</th>
+                          <th className="text-left p-4 font-semibold text-foreground">Região</th>
+                          <th className="text-left p-4 font-semibold text-foreground hidden sm:table-cell">Tipo</th>
+                          <th className="text-left p-4 font-semibold text-foreground hidden sm:table-cell">Idade</th>
+                          <th className="text-left p-4 font-semibold text-foreground">Estado</th>
+                          <th className="text-left p-4 font-semibold text-foreground hidden md:table-cell">Data</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {beneficiaryRequests.map((r: any) => (
+                          <tr key={r.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
+                            <td className="p-4">
+                              <p className="font-medium text-foreground">{r.contact_name}</p>
+                              <p className="text-xs text-muted-foreground">{r.contact_email}</p>
+                            </td>
+                            <td className="p-4"><Badge variant="secondary">{r.region}</Badge></td>
+                            <td className="p-4 hidden sm:table-cell text-muted-foreground">{r.beneficiary_type === "crianca" ? "Criança" : "Adulto"}</td>
+                            <td className="p-4 hidden sm:table-cell text-muted-foreground">{r.beneficiary_age}</td>
+                            <td className="p-4">
+                              <Badge className={
+                                r.status === "aprovado" ? "bg-success/10 text-success" :
+                                r.status === "em_avaliacao" ? "bg-accent/10 text-accent" :
+                                r.status === "concluido" ? "bg-accent/10 text-accent" :
+                                "bg-muted text-muted-foreground"
+                              }>
+                                {r.status === "pendente" ? "Pendente" : r.status === "em_avaliacao" ? "Em Avaliação" : r.status === "aprovado" ? "Aprovado" : r.status === "concluido" ? "Concluído" : r.status}
+                              </Badge>
+                            </td>
+                            <td className="p-4 hidden md:table-cell text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString("pt-PT")}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === "donations" && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">Donativos ({donations.length})</h3>
+                {donations.length > 0 && (
+                  <Badge className="bg-accent/10 text-accent text-sm">
+                    Total: {(donations.reduce((sum: number, d: any) => sum + (d.amount_cents || 0), 0) / 100).toFixed(2)}€
+                  </Badge>
+                )}
+              </div>
+              {donationsLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground mx-auto" />
+              ) : donations.length === 0 ? (
+                <div className="bg-card rounded-2xl border border-border p-12 text-center">
+                  <Heart className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+                  <p className="text-sm text-muted-foreground">Ainda sem donativos registados.</p>
+                </div>
+              ) : (
+                <div className="bg-card rounded-2xl border border-border overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border bg-muted/30">
+                          <th className="text-left p-4 font-semibold text-foreground">Doador</th>
+                          <th className="text-left p-4 font-semibold text-foreground">Valor</th>
+                          <th className="text-left p-4 font-semibold text-foreground hidden sm:table-cell">Método</th>
+                          <th className="text-left p-4 font-semibold text-foreground hidden md:table-cell">Mensagem</th>
+                          <th className="text-left p-4 font-semibold text-foreground hidden md:table-cell">Data</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {donations.map((d: any) => (
+                          <tr key={d.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
+                            <td className="p-4">
+                              <p className="font-medium text-foreground">{d.donor_name || "Anónimo"}</p>
+                              {d.donor_email && <p className="text-xs text-muted-foreground">{d.donor_email}</p>}
+                            </td>
+                            <td className="p-4 font-bold text-accent">{(d.amount_cents / 100).toFixed(2)}€</td>
+                            <td className="p-4 hidden sm:table-cell">
+                              <Badge variant="secondary" className="text-xs capitalize">{d.method}</Badge>
+                            </td>
+                            <td className="p-4 hidden md:table-cell text-xs text-muted-foreground max-w-[200px] truncate">{d.message || "—"}</td>
+                            <td className="p-4 hidden md:table-cell text-xs text-muted-foreground">{new Date(d.created_at).toLocaleDateString("pt-PT")}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
