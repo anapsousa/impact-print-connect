@@ -26,14 +26,31 @@ import { PORTUGAL_REGIONS } from "@/lib/regions";
 import { Plus, Loader2 } from "lucide-react";
 
 const PRINTER_MODELS = [
-  "Bambu Lab A1 mini",
-  "Bambu Lab A1",
-  "Bambu Lab P1S",
-  "Bambu Lab X1C",
-  "Prusa MK4",
-  "Prusa Mini",
-  "Creality Ender 3",
-  "Creality K1",
+  // Bambu Lab
+  "Bambu Lab A1 mini", "Bambu Lab A1", "Bambu Lab P1S", "Bambu Lab P1P",
+  "Bambu Lab X1C", "Bambu Lab X1E", "Bambu Lab X1", "Bambu Lab H2S",
+  "Bambu Lab H2D", "Bambu Lab P2S", "Bambu Lab A2",
+  // Prusa
+  "Prusa MK4S", "Prusa MK4", "Prusa MK3S+", "Prusa MINI+", "Prusa XL",
+  "Prusa Core One",
+  // Creality
+  "Creality Ender 3 V3", "Creality Ender 3 V2", "Creality Ender 3 S1",
+  "Creality CR-10 SE", "Creality CR-10", "Creality K1 Max", "Creality K1C",
+  "Creality K1", "Creality K2 Plus",
+  // Elegoo
+  "Elegoo Neptune 4 Pro", "Elegoo Neptune 4 Plus", "Elegoo Neptune 4",
+  "Elegoo Neptune 3 Pro", "Elegoo Neptune 3 Plus",
+  // QIDI
+  "QIDI X-Max 3", "QIDI X-Plus 3", "QIDI X-Smart 3",
+  "QIDI Q1 Pro",
+  // Anycubic
+  "Anycubic Kobra 3", "Anycubic Kobra 2 Pro", "Anycubic Kobra 2",
+  "Anycubic Vyper",
+  // Voron
+  "Voron 2.4", "Voron Trident", "Voron 0.2",
+  // Outras
+  "FlashForge Adventurer 5M Pro", "FlashForge Adventurer 5M",
+  "Artillery Sidewinder X4 Plus", "Sovol SV08",
   "Outro",
 ];
 
