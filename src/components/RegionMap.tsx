@@ -15,14 +15,13 @@ interface Region {
 }
 
 const regions: Region[] = [
-  { id: "northwest", name: "Northwest", x: 5, y: 8, width: 18, height: 25, printers: 12, chairsNeeded: 8, chairsComplete: 3 },
-  { id: "northeast", name: "Northeast", x: 55, y: 5, width: 20, height: 22, printers: 24, chairsNeeded: 15, chairsComplete: 9 },
-  { id: "midwest", name: "Midwest", x: 28, y: 15, width: 25, height: 28, printers: 18, chairsNeeded: 12, chairsComplete: 5 },
-  { id: "southwest", name: "Southwest", x: 8, y: 45, width: 22, height: 30, printers: 8, chairsNeeded: 6, chairsComplete: 2 },
-  { id: "southeast", name: "Southeast", x: 50, y: 38, width: 25, height: 30, printers: 15, chairsNeeded: 10, chairsComplete: 7 },
-  { id: "central", name: "Central", x: 32, y: 48, width: 18, height: 25, printers: 5, chairsNeeded: 4, chairsComplete: 1 },
-  { id: "west", name: "West Coast", x: 2, y: 30, width: 12, height: 20, printers: 20, chairsNeeded: 14, chairsComplete: 8 },
-  { id: "east", name: "East Coast", x: 75, y: 20, width: 14, height: 35, printers: 30, chairsNeeded: 18, chairsComplete: 12 },
+  { id: "norte", name: "Norte", x: 25, y: 2, width: 28, height: 22, printers: 24, chairsNeeded: 15, chairsComplete: 9 },
+  { id: "centro", name: "Centro", x: 18, y: 24, width: 30, height: 20, printers: 18, chairsNeeded: 12, chairsComplete: 5 },
+  { id: "lisboa", name: "Lisboa", x: 15, y: 46, width: 22, height: 16, printers: 30, chairsNeeded: 18, chairsComplete: 12 },
+  { id: "alentejo", name: "Alentejo", x: 22, y: 62, width: 32, height: 18, printers: 8, chairsNeeded: 6, chairsComplete: 2 },
+  { id: "algarve", name: "Algarve", x: 20, y: 80, width: 30, height: 14, printers: 12, chairsNeeded: 8, chairsComplete: 3 },
+  { id: "acores", name: "Açores", x: 68, y: 10, width: 22, height: 18, printers: 5, chairsNeeded: 4, chairsComplete: 1 },
+  { id: "madeira", name: "Madeira", x: 68, y: 55, width: 22, height: 18, printers: 10, chairsNeeded: 7, chairsComplete: 4 },
 ];
 
 const RegionMap = () => {
