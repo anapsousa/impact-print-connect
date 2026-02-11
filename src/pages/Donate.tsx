@@ -247,7 +247,7 @@ const Donate = () => {
                   size="lg"
                   variant="outline"
                   onClick={handleCopyMbway}
-                  className="border-primary-foreground/40 text-primary-foreground hover:bg-primary-foreground/10"
+                  className="border-primary-foreground/40 bg-primary-foreground/15 text-primary-foreground font-semibold hover:bg-primary-foreground/25"
                 >
                   <Copy className="w-4 h-4 mr-2" /> Copiar número MB WAY
                 </Button>
