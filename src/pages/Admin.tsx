@@ -9,8 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Printer, Users, Target, LogOut, Plus, Loader2,
-  BarChart3, Package, Armchair, ChevronLeft, Heart, Accessibility, UserPlus, Link2,
+  BarChart3, Package, Armchair, ChevronLeft, Heart, Accessibility, UserPlus, Link2, Eye,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import ProjectProgressCard from "@/components/admin/ProjectProgressCard";
@@ -47,6 +53,7 @@ const Admin = () => {
   const [filterBuildVolume, setFilterBuildVolume] = useState("all");
   const [allocateDialogOpen, setAllocateDialogOpen] = useState(false);
   const [allocateContributor, setAllocateContributor] = useState<typeof contributors[0] | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -542,6 +549,7 @@ const Admin = () => {
                           <th className="text-left p-4 font-semibold text-foreground hidden sm:table-cell">Idade</th>
                           <th className="text-left p-4 font-semibold text-foreground">Estado</th>
                           <th className="text-left p-4 font-semibold text-foreground hidden md:table-cell">Data</th>
+                          <th className="text-right p-4 font-semibold text-foreground w-20">Ações</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -565,6 +573,11 @@ const Admin = () => {
                               </Badge>
                             </td>
                             <td className="p-4 hidden md:table-cell text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString("pt-PT")}</td>
+                            <td className="p-4 text-right">
+                              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground" onClick={() => setSelectedRequest(r)} title="Ver detalhes">
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -574,6 +587,75 @@ const Admin = () => {
               )}
             </div>
           )}
+
+          <Dialog open={!!selectedRequest} onOpenChange={(open) => !open && setSelectedRequest(null)}>
+            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Detalhes do pedido</DialogTitle>
+              </DialogHeader>
+              {selectedRequest && (
+                <div className="space-y-5 text-sm">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Contacto</p>
+                    <p className="font-medium text-foreground">{selectedRequest.contact_name}</p>
+                    <p className="text-muted-foreground">{selectedRequest.contact_email}</p>
+                    {selectedRequest.contact_phone && <p className="text-muted-foreground">{selectedRequest.contact_phone}</p>}
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Região</p>
+                      <Badge variant="secondary">{selectedRequest.region}</Badge>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Estado</p>
+                      <Badge className={
+                        selectedRequest.status === "aprovado" ? "bg-success/10 text-success" :
+                        selectedRequest.status === "em_avaliacao" ? "bg-accent/10 text-accent" :
+                        selectedRequest.status === "concluido" ? "bg-accent/10 text-accent" :
+                        "bg-muted text-muted-foreground"
+                      }>
+                        {selectedRequest.status === "pendente" ? "Pendente" : selectedRequest.status === "em_avaliacao" ? "Em Avaliação" : selectedRequest.status === "aprovado" ? "Aprovado" : selectedRequest.status === "concluido" ? "Concluído" : selectedRequest.status}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Tipo de beneficiário</p>
+                      <p className="text-foreground">
+                        {selectedRequest.beneficiary_type === "ate_8" ? "Criança até 8 anos" : selectedRequest.beneficiary_type === "mais_8" ? "Criança com mais de 8 anos" : selectedRequest.beneficiary_type === "crianca" ? "Criança" : selectedRequest.beneficiary_type === "adulto" ? "Adulto" : selectedRequest.beneficiary_type}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Idade</p>
+                      <p className="text-foreground">{selectedRequest.beneficiary_age}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Descrição da necessidade</p>
+                    <p className="text-foreground whitespace-pre-wrap">{selectedRequest.description}</p>
+                  </div>
+                  {selectedRequest.how_found_us && (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Como nos encontrou</p>
+                      <p className="text-foreground">{selectedRequest.how_found_us}</p>
+                    </div>
+                  )}
+                  {selectedRequest.notes && (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Notas (organizador)</p>
+                      <p className="text-foreground whitespace-pre-wrap">{selectedRequest.notes}</p>
+                    </div>
+                  )}
+                  <div className="pt-2 border-t border-border flex gap-4 text-xs text-muted-foreground">
+                    <span>Criado: {new Date(selectedRequest.created_at).toLocaleString("pt-PT")}</span>
+                    {selectedRequest.updated_at !== selectedRequest.created_at && (
+                      <span>Atualizado: {new Date(selectedRequest.updated_at).toLocaleString("pt-PT")}</span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
 
           {activeTab === "donations" && (
             <div className="space-y-4">
