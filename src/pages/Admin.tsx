@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Printer, Users, Target, LogOut, Plus, Loader2,
-  BarChart3, Package, Armchair, ChevronLeft, Heart, Accessibility,
+  BarChart3, Package, Armchair, ChevronLeft, Heart, Accessibility, UserPlus,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
@@ -17,6 +17,7 @@ import ProjectProgressCard from "@/components/admin/ProjectProgressCard";
 import ProjectPartsList from "@/components/admin/ProjectPartsList";
 import AddContributorDialog from "@/components/admin/AddContributorDialog";
 import ContributorsFilters from "@/components/admin/ContributorsFilters";
+import AllocateVolunteerDialog from "@/components/admin/AllocateVolunteerDialog";
 
 const Admin = () => {
   const { user, loading: authLoading, signOut } = useAuth();
@@ -32,6 +33,8 @@ const Admin = () => {
   const [filterMaterial, setFilterMaterial] = useState("all");
   const [filterExperience, setFilterExperience] = useState("all");
   const [filterBuildVolume, setFilterBuildVolume] = useState("all");
+  const [allocateDialogOpen, setAllocateDialogOpen] = useState(false);
+  const [allocateContributor, setAllocateContributor] = useState<typeof contributors[0] | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -326,6 +329,7 @@ const Admin = () => {
                         <th className="text-left p-4 font-semibold text-foreground hidden md:table-cell">Turnaround</th>
                         <th className="text-left p-4 font-semibold text-foreground hidden lg:table-cell">Envia</th>
                         <th className="text-left p-4 font-semibold text-foreground">Região</th>
+                        <th className="text-right p-4 font-semibold text-foreground">Ações</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -342,7 +346,7 @@ const Admin = () => {
                         return sortedRegions.map((region) => (
                           <>
                             <tr key={`header-${region}`} className="bg-muted/50">
-                              <td colSpan={8} className="p-3 text-xs font-bold text-foreground uppercase tracking-wider">
+                              <td colSpan={9} className="p-3 text-xs font-bold text-foreground uppercase tracking-wider">
                                 {regionNames[region] ?? region} ({grouped[region].length})
                               </td>
                             </tr>
@@ -376,6 +380,20 @@ const Admin = () => {
                                   {c.can_ship ? <Badge className="bg-accent/10 text-accent">Sim</Badge> : <span className="text-muted-foreground">Não</span>}
                                 </td>
                                 <td className="p-4"><Badge variant="secondary">{c.region}</Badge></td>
+                                <td className="p-4 text-right">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8 text-xs gap-1"
+                                    onClick={() => {
+                                      setAllocateContributor(c);
+                                      setAllocateDialogOpen(true);
+                                    }}
+                                  >
+                                    <UserPlus className="w-3.5 h-3.5" />
+                                    Alocar
+                                  </Button>
+                                </td>
                               </tr>
                             ))}
                           </>
@@ -392,6 +410,14 @@ const Admin = () => {
               </div>
             </div>
           )}
+
+          <AllocateVolunteerDialog
+            open={allocateDialogOpen}
+            onOpenChange={setAllocateDialogOpen}
+            contributor={allocateContributor}
+            projects={projects}
+            parts={parts}
+          />
 
           {activeTab === "projects" && (
             <div className="space-y-6">
