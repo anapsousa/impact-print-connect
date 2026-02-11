@@ -69,6 +69,9 @@ const AboutSection = () => {
                 </a>, cada cadeira é composta por 24 peças que podem ser impressas por voluntários em qualquer parte de Portugal.
               </p>
               <p>
+                Esta cadeira é adequada para idades entre <strong className="text-foreground">1,5 e 8 anos</strong>. Será dada preferência a crianças que a possam utilizar durante mais tempo.
+              </p>
+              <p>
                 Uma iniciativa da comunidade <strong className="text-foreground">Smart 3D</strong> portuguesa — porque cada impressora conta, cada peça importa e cada cadeira muda uma vida.
               </p>
             </div>

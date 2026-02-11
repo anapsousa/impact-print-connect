@@ -552,7 +552,7 @@ const Admin = () => {
                               <p className="text-xs text-muted-foreground">{r.contact_email}</p>
                             </td>
                             <td className="p-4"><Badge variant="secondary">{r.region}</Badge></td>
-                            <td className="p-4 hidden sm:table-cell text-muted-foreground">{r.beneficiary_type === "crianca" ? "Criança" : "Adulto"}</td>
+                            <td className="p-4 hidden sm:table-cell text-muted-foreground">{r.beneficiary_type === "ate_8" ? "Criança até 8 anos" : r.beneficiary_type === "mais_8" ? "Criança >8 anos" : r.beneficiary_type === "crianca" ? "Criança" : r.beneficiary_type === "adulto" ? "Adulto" : r.beneficiary_type}</td>
                             <td className="p-4 hidden sm:table-cell text-muted-foreground">{r.beneficiary_age}</td>
                             <td className="p-4">
                               <Badge className={

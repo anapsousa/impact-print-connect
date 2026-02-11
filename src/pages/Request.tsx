@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/select";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { ArrowLeft, ArrowRight, Check, User, MapPin, FileText, Send, Loader2, Accessibility } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, User, MapPin, FileText, Send, Loader2, Accessibility, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { PORTUGAL_REGIONS } from "@/lib/regions";
@@ -22,8 +22,8 @@ const steps = [
 ];
 
 const beneficiaryTypes = [
-  { value: "crianca", label: "Criança", description: "Até 12 anos de idade" },
-  { value: "adulto", label: "Adulto", description: "Mais de 12 anos" },
+  { value: "ate_8", label: "Criança até 8 anos", description: "Entre 1,5 e 8 anos" },
+  { value: "mais_8", label: "Criança com mais de 8 anos", description: "Mais de 8 anos" },
 ];
 
 const howFoundOptions = [
@@ -43,7 +43,7 @@ const Request = () => {
 
   const [form, setForm] = useState({
     name: "", email: "", phone: "", region: "centro",
-    type: "crianca", age: "", description: "", howFound: "",
+    type: "ate_8", age: "", description: "", howFound: "",
   });
 
   const updateField = (field: string, value: string) => {
@@ -54,11 +54,13 @@ const Request = () => {
     switch (currentStep) {
       case 1: return form.name.trim().length > 0 && form.email.includes("@");
       case 2: return form.region.length > 0;
-      case 3: return form.type.length > 0 && form.age.trim().length > 0 && form.description.trim().length > 0;
+      case 3: return form.type === "ate_8" && form.age.trim().length > 0 && form.description.trim().length > 0;
       case 4: return true;
       default: return false;
     }
   };
+
+  const isNotSuitableAge = currentStep === 3 && form.type === "mais_8";
 
   const handleSubmit = async () => {
     setSubmitting(true);
@@ -128,7 +130,7 @@ const Request = () => {
               <span className="text-xs font-semibold text-accent">Mobilidade para todos</span>
             </div>
             <h1 className="text-3xl font-black text-foreground mb-2">Pedir Ajuda</h1>
-            <p className="text-muted-foreground">Registe a necessidade de uma cadeira de rodas ou equipamento de mobilidade.</p>
+            <p className="text-muted-foreground">Registe a necessidade de uma cadeira de rodas para uma criança. Indique se é para até 8 anos ou mais de 8 anos.</p>
           </div>
 
           {/* Steps indicator */}
@@ -185,14 +187,41 @@ const Request = () => {
                   </div>
                 )}
 
-                {currentStep === 3 && (
+                {currentStep === 3 && isNotSuitableAge && (
+                  <motion.div key="not-suitable" variants={slideVariants} initial="enter" animate="center" className="space-y-6 py-4">
+                    <div className="flex flex-col items-center text-center">
+                      <div className="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center mb-4">
+                        <AlertCircle className="w-8 h-8 text-amber-600 dark:text-amber-500" />
+                      </div>
+                      <h3 className="text-xl font-bold text-foreground mb-2">Lamentamos, não podemos prosseguir</h3>
+                      <p className="text-muted-foreground text-sm leading-relaxed max-w-sm">
+                        Esta cadeira não é adequada para a faixa etária que indicou. O nosso modelo está concebido apenas para crianças entre 1,5 e 8 anos e não conseguimos aceitar pedidos para idades superiores.
+                      </p>
+                      <p className="text-muted-foreground text-sm mt-2">
+                        Se a criança tiver até 8 anos, escolha a opção abaixo para continuar o pedido. Para outras idades, recomendamos que contacte o seu médico ou uma associação de apoio à mobilidade para explorar outras soluções.
+                      </p>
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                      <Button variant="outline" onClick={() => updateField("type", "ate_8")}
+                        className="border-accent/30 text-accent hover:bg-accent/10">
+                        É para uma criança até 8 anos — continuar
+                      </Button>
+                      <Button variant="ghost" onClick={() => setCurrentStep(2)} className="text-muted-foreground">
+                        <ArrowLeft className="w-4 h-4 mr-1" /> Voltar à localização
+                      </Button>
+                    </div>
+                  </motion.div>
+                )}
+
+                {currentStep === 3 && !isNotSuitableAge && (
                   <div className="space-y-4">
                     <div>
                       <Label className="text-base font-bold text-foreground">Detalhes da Necessidade</Label>
                       <p className="text-sm text-muted-foreground mt-1 mb-3">Descreva para quem é e o que precisa.</p>
                     </div>
                     <div>
-                      <Label className="text-sm">Para quem é? *</Label>
+                      <Label className="text-sm">Para quem é a cadeira? *</Label>
+                      <p className="text-xs text-muted-foreground mt-0.5 mb-1">Criança até 8 anos ou com mais de 8 anos?</p>
                       <div className="grid grid-cols-2 gap-2 mt-1">
                         {beneficiaryTypes.map((t) => (
                           <button key={t.value} onClick={() => updateField("type", t.value)}
@@ -236,7 +265,7 @@ const Request = () => {
                         <p><span className="font-medium text-foreground">Nome:</span> {form.name}</p>
                         <p><span className="font-medium text-foreground">Email:</span> {form.email}</p>
                         <p><span className="font-medium text-foreground">Região:</span> {PORTUGAL_REGIONS.find(r => r.id === form.region)?.name}</p>
-                        <p><span className="font-medium text-foreground">Beneficiário:</span> {form.type === "crianca" ? "Criança" : "Adulto"}, {form.age}</p>
+                        <p><span className="font-medium text-foreground">Para quem:</span> {beneficiaryTypes.find(t => t.value === form.type)?.label ?? form.type}, {form.age}</p>
                       </div>
                     </div>
                   </div>
