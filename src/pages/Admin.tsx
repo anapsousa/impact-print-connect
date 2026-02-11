@@ -40,7 +40,12 @@ const Admin = () => {
   const { data: contributors = [], isLoading: contribLoading } = useQuery({
     queryKey: ["admin-contributors"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("contributors").select("*").order("created_at", { ascending: false });
+      // Fetch all contributors (Supabase default limit is 100; request up to 5000)
+      const { data, error } = await supabase
+        .from("contributors")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .range(0, 4999);
       if (error) throw error;
       return data;
     },

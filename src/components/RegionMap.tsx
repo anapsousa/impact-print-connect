@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Printer } from "lucide-react";
+import { Printer, Users } from "lucide-react";
 import { useRegionalStats } from "@/hooks/useDashboardStats";
 
 interface Region {
@@ -22,13 +22,23 @@ const regionLayout: Region[] = [
   { id: "madeira", name: "Madeira", x: 68, y: 55, width: 22, height: 18 },
 ];
 
+// Scale for color intensity: use log-like scale so 10–200+ volunteers look good
+const maxForScale = 120;
+function intensityFromCount(count: number): number {
+  if (count <= 0) return 0;
+  return Math.min(1, Math.log2(1 + count) / Math.log2(1 + maxForScale));
+}
+
 const RegionMap = () => {
   const [hoveredRegion, setHoveredRegion] = useState<string | null>(null);
-  const { data: regionalStats = [] } = useRegionalStats();
+  const { data: regionalStats = [], isLoading } = useRegionalStats();
 
-  const getRegionPrinters = (regionId: string) => {
+  const getRegionStat = (regionId: string) => {
     const stat = regionalStats.find((s) => s.region === regionId);
-    return stat?.printer_count ?? 0;
+    const volunteers = stat?.contributor_count ?? 0;
+    const printers = stat?.printer_count ?? 0;
+    const intensity = Math.max(intensityFromCount(volunteers), intensityFromCount(printers));
+    return { volunteers, printers, intensity };
   };
 
   return (
@@ -36,63 +46,76 @@ const RegionMap = () => {
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-black text-foreground mb-3">Impacto por Região</h2>
-          <p className="text-muted-foreground text-lg">Passe o rato sobre uma região para ver a atividade das impressoras</p>
+          <p className="text-muted-foreground text-lg">Passe o rato sobre uma região para ver voluntários e impressoras</p>
         </div>
 
         <div className="relative bg-card rounded-2xl border border-border p-8 shadow-sm overflow-hidden">
-          <div className="relative w-full aspect-[2/1] min-h-[300px]">
-            {regionLayout.map((region) => {
-              const isHovered = hoveredRegion === region.id;
-              const printers = getRegionPrinters(region.id);
-              const intensity = Math.min(printers / 30, 1);
+          {isLoading ? (
+            <div className="flex items-center justify-center min-h-[300px] text-muted-foreground">A carregar…</div>
+          ) : (
+            <>
+              <div className="relative w-full aspect-[2/1] min-h-[300px]">
+                {regionLayout.map((region) => {
+                  const isHovered = hoveredRegion === region.id;
+                  const { volunteers, printers, intensity } = getRegionStat(region.id);
 
-              return (
-                <motion.div
-                  key={region.id}
-                  className="absolute rounded-xl cursor-pointer transition-colors duration-200 flex items-center justify-center"
-                  style={{
-                    left: `${region.x}%`, top: `${region.y}%`,
-                    width: `${region.width}%`, height: `${region.height}%`,
-                    backgroundColor: isHovered ? `hsl(160 84% 39% / 0.25)` : `hsl(213 52% 24% / ${0.06 + intensity * 0.14})`,
-                    borderWidth: 2,
-                    borderColor: isHovered ? `hsl(160 84% 39% / 0.5)` : `hsl(213 52% 24% / 0.08)`,
-                  }}
-                  onMouseEnter={() => setHoveredRegion(region.id)}
-                  onMouseLeave={() => setHoveredRegion(null)}
-                  whileHover={{ scale: 1.02 }}
-                  transition={{ duration: 0.15 }}
-                >
-                  <div className="flex flex-col items-center gap-1">
-                    <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-full" style={{
-                        backgroundColor: isHovered ? "hsl(160 84% 39%)" : `hsl(213 52% 24% / ${0.3 + intensity * 0.5})`,
-                      }} />
-                      <span className={`text-xs font-semibold ${isHovered ? "text-accent" : "text-foreground/40"}`}>{printers}</span>
+                  return (
+                    <motion.div
+                      key={region.id}
+                      className="absolute rounded-xl cursor-pointer transition-colors duration-200 flex items-center justify-center"
+                      style={{
+                        left: `${region.x}%`, top: `${region.y}%`,
+                        width: `${region.width}%`, height: `${region.height}%`,
+                        backgroundColor: isHovered ? `hsl(160 84% 39% / 0.25)` : `hsl(213 52% 24% / ${0.06 + intensity * 0.2})`,
+                        borderWidth: 2,
+                        borderColor: isHovered ? `hsl(160 84% 39% / 0.5)` : `hsl(213 52% 24% / ${0.08 + intensity * 0.12})`,
+                      }}
+                      onMouseEnter={() => setHoveredRegion(region.id)}
+                      onMouseLeave={() => setHoveredRegion(null)}
+                      whileHover={{ scale: 1.02 }}
+                      transition={{ duration: 0.15 }}
+                    >
+                      <div className="flex flex-col items-center gap-1">
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1">
+                            <Users className="w-3 h-3" />
+                            <span className={`text-xs font-semibold ${isHovered ? "text-accent" : "text-foreground/50"}`}>{volunteers}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Printer className="w-3 h-3" />
+                            <span className={`text-xs font-semibold ${isHovered ? "text-accent" : "text-foreground/50"}`}>{printers}</span>
+                          </div>
+                        </div>
+                        <span className={`text-[10px] font-medium ${isHovered ? "text-foreground/70" : "text-foreground/25"} hidden sm:block`}>{region.name}</span>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+
+              <AnimatePresence>
+                {hoveredRegion && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-navy-deep text-primary-foreground px-5 py-4 rounded-xl shadow-lg border border-navy-light/20 min-w-[240px]"
+                  >
+                    <p className="font-bold text-base mb-3">{regionLayout.find((r) => r.id === hoveredRegion)?.name}</p>
+                    <div className="flex items-center gap-6 text-sm">
+                      <div className="flex items-center gap-1.5">
+                        <Users className="w-4 h-4 text-accent" />
+                        <span>{getRegionStat(hoveredRegion).volunteers} voluntários</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Printer className="w-4 h-4 text-accent" />
+                        <span>{getRegionStat(hoveredRegion).printers} impressoras</span>
+                      </div>
                     </div>
-                    <span className={`text-[10px] font-medium ${isHovered ? "text-foreground/70" : "text-foreground/25"} hidden sm:block`}>{region.name}</span>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-
-          <AnimatePresence>
-            {hoveredRegion && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
-                transition={{ duration: 0.15 }}
-                className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-navy-deep text-primary-foreground px-5 py-4 rounded-xl shadow-lg border border-navy-light/20 min-w-[220px]"
-              >
-                <p className="font-bold text-base mb-2">{regionLayout.find((r) => r.id === hoveredRegion)?.name}</p>
-                <div className="flex items-center gap-4 text-sm">
-                  <div className="flex items-center gap-1.5">
-                    <Printer className="w-3.5 h-3.5 text-accent" />
-                    <span>{getRegionPrinters(hoveredRegion)} impressoras</span>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </>
+          )}
         </div>
       </div>
     </section>
