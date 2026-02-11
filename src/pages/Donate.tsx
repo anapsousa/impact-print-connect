@@ -252,9 +252,6 @@ const Donate = () => {
                   <Copy className="w-4 h-4 mr-2" /> Copiar número MB WAY
                 </Button>
               </div>
-              <p className="text-xs text-primary-foreground/70">
-                {mbwayNumberPretty} — custo de uma chamada para a rede móvel nacional.
-              </p>
             </div>
           </div>
         </motion.div>
