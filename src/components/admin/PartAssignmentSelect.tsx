@@ -16,6 +16,7 @@ interface Contributor {
   materials?: string[];
   experience_level?: string;
   build_volume_ok?: boolean;
+  build_plate_size?: string | null;
 }
 
 interface PartAssignmentSelectProps {
@@ -68,9 +69,10 @@ const PartAssignmentSelect = ({ value, contributors, onAssign, disabled }: PartA
             {grouped[region].map((c) => {
               const expLabel = c.experience_level === "expert" ? "⭐" : c.experience_level === "beginner" ? "🔰" : "";
               const volWarn = c.build_volume_ok === false ? " ⚠️" : "";
+              const plate = c.build_plate_size ? ` · ${c.build_plate_size}` : "";
               return (
                 <SelectItem key={c.id} value={c.id}>
-                  {expLabel}{c.name} · {c.printer_models?.join(", ") || "—"} {c.materials?.length ? `· ${c.materials.join("/")}` : ""}{volWarn}
+                  {expLabel}{c.name} · {c.printer_models?.join(", ") || "—"}{plate} {c.materials?.length ? `· ${c.materials.join("/")}` : ""}{volWarn}
                 </SelectItem>
               );
             })}

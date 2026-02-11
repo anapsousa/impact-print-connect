@@ -51,7 +51,6 @@ const PRINTER_MODELS = [
   // Outras
   "FlashForge Adventurer 5M Pro", "FlashForge Adventurer 5M",
   "Artillery Sidewinder X4 Plus", "Sovol SV08",
-  "Outro",
 ];
 
 const AddContributorDialog = () => {
@@ -66,36 +65,43 @@ const AddContributorDialog = () => {
     location: "",
     region: "centro",
     printer_models: [] as string[],
+    other_printer: "",
     availability: "Disponível",
     can_ship: false,
     phone: "",
     materials: ["PETG"] as string[],
     build_volume_ok: false,
+    build_plate_size: "",
+    build_plate_custom: "",
     experience_level: "intermediate",
     turnaround_time: "",
     willing_to_collaborate: false,
   });
 
   const resetForm = () =>
-    setForm({ name: "", email: "", location: "", region: "centro", printer_models: [], availability: "Disponível", can_ship: false, phone: "", materials: ["PETG"], build_volume_ok: false, experience_level: "intermediate", turnaround_time: "", willing_to_collaborate: false });
+    setForm({ name: "", email: "", location: "", region: "centro", printer_models: [], other_printer: "", availability: "Disponível", can_ship: false, phone: "", materials: ["PETG"], build_volume_ok: false, build_plate_size: "", build_plate_custom: "", experience_level: "intermediate", turnaround_time: "", willing_to_collaborate: false });
 
   const handleSave = async () => {
-    if (!form.name.trim() || !form.email.trim() || !form.location.trim() || !form.printer_models.length) {
+    const printers = [...form.printer_models];
+    if (form.other_printer.trim()) printers.push("Outra: " + form.other_printer.trim());
+    if (!form.name.trim() || !form.email.trim() || !form.location.trim() || !printers.length) {
       toast({ title: "Campos obrigatórios", description: "Preencha nome, email, localização e impressora.", variant: "destructive" });
       return;
     }
+    const buildPlateSize = form.build_plate_size === "outro" ? (form.build_plate_custom.trim() || null) : (form.build_plate_size || null);
     setSaving(true);
     const { error } = await supabase.from("contributors").insert({
       name: form.name.trim(),
       email: form.email.trim(),
       location: form.location.trim(),
       region: form.region,
-      printer_models: form.printer_models,
+      printer_models: printers,
       availability: form.availability,
       can_ship: form.can_ship,
       phone: form.phone.trim() || null,
       materials: form.materials,
       build_volume_ok: form.build_volume_ok,
+      build_plate_size: buildPlateSize,
       experience_level: form.experience_level,
       turnaround_time: form.turnaround_time || null,
       willing_to_collaborate: form.willing_to_collaborate,
@@ -151,7 +157,7 @@ const AddContributorDialog = () => {
             </div>
           </div>
           <div className="grid gap-1.5">
-            <Label>Impressora(s) * <span className="text-xs text-muted-foreground font-normal">({form.printer_models.length} selecionada{form.printer_models.length !== 1 ? "s" : ""})</span></Label>
+            <Label>Impressora(s) * <span className="text-xs text-muted-foreground font-normal">({form.printer_models.length + (form.other_printer.trim() ? 1 : 0)} selecionada{(form.printer_models.length + (form.other_printer.trim() ? 1 : 0)) !== 1 ? "s" : ""})</span></Label>
             <div className="max-h-[160px] overflow-y-auto space-y-1 border border-border rounded-md p-2">
               {PRINTER_MODELS.map((m) => (
                 <button key={m} type="button" onClick={() => {
@@ -163,6 +169,27 @@ const AddContributorDialog = () => {
                   }`}>{m}</button>
               ))}
             </div>
+            <div className="mt-1.5">
+              <Label className="text-xs text-muted-foreground">Outra (escrever modelo)</Label>
+              <Input placeholder="ex.: Minha Marca XYZ" value={form.other_printer} onChange={(e) => setForm({ ...form, other_printer: e.target.value })} className="mt-0.5" />
+            </div>
+          </div>
+          <div className="grid gap-1.5">
+            <Label>Build plate (mm)</Label>
+            <Select value={form.build_plate_size || "_"} onValueChange={(v) => setForm({ ...form, build_plate_size: v === "_" ? "" : v })}>
+              <SelectTrigger><SelectValue placeholder="Tamanho do build plate" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="_">—</SelectItem>
+                <SelectItem value="180×180×180">180×180×180</SelectItem>
+                <SelectItem value="220×220×250">220×220×250</SelectItem>
+                <SelectItem value="256×256×256">256×256×256</SelectItem>
+                <SelectItem value="300×300×300">300×300×300</SelectItem>
+                <SelectItem value="outro">Outro</SelectItem>
+              </SelectContent>
+            </Select>
+            {form.build_plate_size === "outro" && (
+              <Input placeholder="ex.: 200×200×180" value={form.build_plate_custom} onChange={(e) => setForm({ ...form, build_plate_custom: e.target.value })} className="mt-1" />
+            )}
           </div>
           <div className="grid gap-1.5">
             <Label htmlFor="phone">Telefone</Label>

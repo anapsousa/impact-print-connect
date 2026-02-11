@@ -446,7 +446,10 @@ const Admin = () => {
                               <p className="text-xs text-muted-foreground">{c.email}</p>
                             </td>
                             <td className="p-4 text-muted-foreground">{c.location}</td>
-                            <td className="p-4 text-muted-foreground hidden sm:table-cell">{((c as any).printer_models ?? []).join(", ") || "—"}</td>
+                            <td className="p-4 text-muted-foreground hidden sm:table-cell">
+                              <span>{((c as any).printer_models ?? []).join(", ") || "—"}</span>
+                              {(c as any).build_plate_size && <span className="block text-xs text-muted-foreground/80 mt-0.5">{(c as any).build_plate_size} mm</span>}
+                            </td>
                             <td className="p-4 hidden sm:table-cell">
                               <div className="flex gap-1">
                                 {((c as any).materials ?? ["PETG"]).map((m: string) => (

@@ -65,6 +65,7 @@ export type Database = {
       contributors: {
         Row: {
           availability: string
+          build_plate_size: string | null
           build_volume_ok: boolean
           can_ship: boolean
           created_at: string
@@ -85,6 +86,7 @@ export type Database = {
         }
         Insert: {
           availability: string
+          build_plate_size?: string | null
           build_volume_ok?: boolean
           can_ship?: boolean
           created_at?: string
@@ -105,6 +107,7 @@ export type Database = {
         }
         Update: {
           availability?: string
+          build_plate_size?: string | null
           build_volume_ok?: boolean
           can_ship?: boolean
           created_at?: string

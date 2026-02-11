@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { ArrowLeft, ArrowRight, Check, User, MapPin, Printer, Calendar, Mail, Pa
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { PORTUGAL_REGIONS } from "@/lib/regions";
+import { getSuggestedBuildPlate } from "@/lib/printerBuildPlates";
 import { useQueryClient } from "@tanstack/react-query";
 
 const steps = [
@@ -52,7 +53,6 @@ const printerModels = [
   // Outras
   "FlashForge Adventurer 5M Pro", "FlashForge Adventurer 5M",
   "Artillery Sidewinder X4 Plus", "Sovol SV08",
-  "Outra",
 ];
 
 const availabilityOptions = [
@@ -79,9 +79,9 @@ const turnaroundOptions = [
 const Contribute = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
-    name: "", location: "", region: "centro", printers: [] as string[], materials: [] as string[],
+    name: "", location: "", region: "centro", printers: [] as string[], otherPrinter: "", materials: [] as string[],
     availability: "", canShip: false, shippingCarrier: "", email: "", phone: "",
-    buildVolumeOk: false, experienceLevel: "intermediate", turnaroundTime: "", willingToCollaborate: false,
+    buildVolumeOk: false, buildPlateSize: "", buildPlateCustom: "", experienceLevel: "intermediate", turnaroundTime: "", willingToCollaborate: false,
   });
   const [submitted, setSubmitted] = useState(false);
   const [portalLink, setPortalLink] = useState("");
@@ -93,11 +93,20 @@ const Contribute = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  // Suggest default build plate when user selects printer(s) and hasn't set one yet
+  useEffect(() => {
+    const printers = [...formData.printers];
+    if (formData.otherPrinter.trim()) printers.push("Outra: " + formData.otherPrinter.trim());
+    if (formData.buildPlateSize !== "" || printers.length === 0) return;
+    const suggested = getSuggestedBuildPlate(printers);
+    if (suggested) setFormData((prev) => ({ ...prev, buildPlateSize: suggested }));
+  }, [formData.printers, formData.otherPrinter]);
+
   const canProceed = () => {
     switch (currentStep) {
       case 1: return formData.name.trim().length > 0;
       case 2: return formData.location.trim().length > 0 && formData.region.length > 0;
-      case 3: return formData.printers.length > 0;
+      case 3: return formData.printers.length > 0 || formData.otherPrinter.trim().length > 0;
       case 4: return formData.materials.length > 0;
       case 5: return formData.experienceLevel.length > 0;
       case 6: return formData.availability.length > 0;
@@ -114,18 +123,24 @@ const Contribute = () => {
     }
 
     setSubmitting(true);
+    const printers = [...formData.printers];
+    if (formData.otherPrinter.trim()) printers.push("Outra: " + formData.otherPrinter.trim());
+    const buildPlateSize = formData.buildPlateSize === "outro"
+      ? (formData.buildPlateCustom.trim() || null)
+      : (formData.buildPlateSize || null);
     const { data, error } = await supabase.from("contributors").insert({
       name: formData.name.trim(),
       email: formData.email.trim(),
       location: formData.location.trim(),
       region: formData.region,
-      printer_models: formData.printers,
+      printer_models: printers,
       materials: formData.materials,
       availability: formData.availability,
       can_ship: formData.canShip,
       shipping_carrier: formData.canShip ? formData.shippingCarrier : null,
       phone: formData.phone.trim() || null,
       build_volume_ok: formData.buildVolumeOk,
+      build_plate_size: buildPlateSize,
       experience_level: formData.experienceLevel,
       turnaround_time: formData.turnaroundTime || null,
       willing_to_collaborate: formData.willingToCollaborate,
@@ -270,16 +285,40 @@ const Contribute = () => {
                         ));
                       })()}
                     </div>
-                    {formData.printers.length > 0 && (
-                      <p className="text-xs text-accent font-medium">{formData.printers.length} impressora(s) selecionada(s)</p>
+                    {(formData.printers.length > 0 || formData.otherPrinter.trim()) && (
+                      <p className="text-xs text-accent font-medium">{formData.printers.length + (formData.otherPrinter.trim() ? 1 : 0)} impressora(s) selecionada(s)</p>
                     )}
-                    <div className="mt-4 p-3 bg-muted/50 rounded-xl border border-border">
-                      <div className="flex items-start gap-3">
-                        <Checkbox id="buildVolume" checked={formData.buildVolumeOk} onCheckedChange={(v) => updateField("buildVolumeOk", !!v)} className="mt-0.5" />
-                        <Label htmlFor="buildVolume" className="text-sm font-medium text-foreground cursor-pointer leading-snug">
-                          A minha impressora tem pelo menos <span className="font-bold text-accent">256 × 256 × 256 mm</span> de volume de impressão
-                          <span className="block text-xs text-muted-foreground mt-1">Requisito mínimo para imprimir peças do TMT. <a href="https://makerworld.com/en/models/556576" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">Ver modelo original →</a></span>
-                        </Label>
+                    <div className="mt-3">
+                      <Label className="text-sm font-medium text-muted-foreground">Não encontra a sua? Escreva aqui:</Label>
+                      <Input placeholder="ex.: Minha Marca XYZ 2000" value={formData.otherPrinter} onChange={(e) => setFormData((p) => ({ ...p, otherPrinter: e.target.value }))} className="mt-1 text-base" />
+                    </div>
+                    <div className="mt-4 space-y-3">
+                      <div>
+                        <Label className="text-sm font-bold text-foreground">Tamanho do build plate (mm)</Label>
+                        <p className="text-xs text-muted-foreground mt-0.5">Largura × profundidade × altura — para alocarmos as peças corretas.</p>
+                        <Select value={formData.buildPlateSize || "_"} onValueChange={(v) => setFormData((p) => ({ ...p, buildPlateSize: v === "_" ? "" : v }))}>
+                          <SelectTrigger className="mt-2"><SelectValue placeholder="Selecionar tamanho" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="_">Selecionar…</SelectItem>
+                            <SelectItem value="180×180×180">180 × 180 × 180</SelectItem>
+                            <SelectItem value="220×220×250">220 × 220 × 250</SelectItem>
+                            <SelectItem value="256×256×256">256 × 256 × 256</SelectItem>
+                            <SelectItem value="300×300×300">300 × 300 × 300</SelectItem>
+                            <SelectItem value="outro">Outro (especificar abaixo)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {formData.buildPlateSize === "outro" && (
+                          <Input placeholder="ex.: 200×200×180" value={formData.buildPlateCustom} onChange={(e) => setFormData((p) => ({ ...p, buildPlateCustom: e.target.value }))} className="mt-2 text-base" />
+                        )}
+                      </div>
+                      <div className="p-3 bg-muted/50 rounded-xl border border-border">
+                        <div className="flex items-start gap-3">
+                          <Checkbox id="buildVolume" checked={formData.buildVolumeOk} onCheckedChange={(v) => updateField("buildVolumeOk", !!v)} className="mt-0.5" />
+                          <Label htmlFor="buildVolume" className="text-sm font-medium text-foreground cursor-pointer leading-snug">
+                            A minha impressora tem pelo menos <span className="font-bold text-accent">256 × 256 × 256 mm</span> de volume de impressão
+                            <span className="block text-xs text-muted-foreground mt-1">Requisito mínimo para peças TMT. <a href="https://makerworld.com/en/models/556576" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">Ver modelo →</a></span>
+                          </Label>
+                        </div>
                       </div>
                     </div>
                   </div>

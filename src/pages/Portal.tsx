@@ -10,6 +10,14 @@ import { Printer, MapPin, Calendar, Package, Mail, Pencil, X, Check, Loader2, Al
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
+import { BUILD_PLATE_OPTIONS } from "@/lib/printerBuildPlates";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Contributor = Tables<"contributors">;
 
@@ -30,6 +38,8 @@ const Portal = () => {
   const [error, setError] = useState<string | null>(null);
   const [editingField, setEditingField] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
+  const [editBuildPlatePreset, setEditBuildPlatePreset] = useState("");
+  const [editBuildPlateCustom, setEditBuildPlateCustom] = useState("");
   const [saving, setSaving] = useState(false);
   const [recoveryEmail, setRecoveryEmail] = useState("");
   const [recovering, setRecovering] = useState(false);
@@ -67,18 +77,37 @@ const Portal = () => {
   const startEdit = (field: string, currentValue: string) => {
     setEditingField(field);
     setEditValue(currentValue);
+    if (field === "build_plate_size") {
+      const preset = BUILD_PLATE_OPTIONS.find((o) => o.value && o.value !== "outro" && currentValue === o.value);
+      if (preset) {
+        setEditBuildPlatePreset(preset.value);
+        setEditBuildPlateCustom("");
+      } else {
+        setEditBuildPlatePreset(currentValue ? "outro" : "");
+        setEditBuildPlateCustom(currentValue && currentValue !== "—" ? currentValue : "");
+      }
+    }
   };
 
   const saveEdit = async () => {
     if (!contributor || !editingField) return;
     setSaving(true);
+    const valueToSave =
+      editingField === "build_plate_size"
+        ? editBuildPlatePreset === "outro"
+          ? editBuildPlateCustom.trim() || null
+          : editBuildPlatePreset || null
+        : editValue;
+    const payload = editingField === "build_plate_size" ? { build_plate_size: valueToSave } : { [editingField]: editValue };
     const { error: err } = await supabase
-      .from("contributors").update({ [editingField]: editValue })
-      .eq("id", contributor.id).eq("token", token!);
+      .from("contributors")
+      .update(payload)
+      .eq("id", contributor.id)
+      .eq("token", token!);
     if (err) {
       toast({ title: "Falha na atualização", description: err.message, variant: "destructive" });
     } else {
-      setContributor({ ...contributor, [editingField]: editValue });
+      setContributor({ ...contributor, ...payload });
       toast({ title: "Dados Atualizados!", description: "Obrigado por manter o seu perfil de missão atualizado." });
     }
     setEditingField(null);
@@ -156,6 +185,7 @@ const Portal = () => {
     { key: "name", label: "Nome", icon: Mail, value: contributor.name },
     { key: "location", label: "Localização", icon: MapPin, value: contributor.location },
     { key: "printer_models", label: "Impressora(s)", icon: Printer, value: ((contributor as any).printer_models ?? []).join(", ") || "—", editable: false },
+    { key: "build_plate_size", label: "Build plate (mm)", icon: Printer, value: (contributor as any).build_plate_size || "—", editable: true },
     { key: "experience_level", label: "Experiência", icon: Star, value: experienceLabels[(contributor as any).experience_level] || "Intermédio", editable: false },
     { key: "availability", label: "Disponibilidade", icon: Calendar, value: contributor.availability },
     { key: "turnaround_time", label: "Tempo de entrega", icon: Clock, value: (contributor as any).turnaround_time || "Não definido" },
@@ -185,6 +215,9 @@ const Portal = () => {
             <div className="bg-card rounded-2xl border border-border p-6 shadow-sm mb-6">
               <h2 className="text-sm font-bold text-foreground mb-4 uppercase tracking-wider">Os Seus Dados</h2>
               <div className="flex gap-2 mb-4 flex-wrap">
+                {(contributor as any).build_plate_size && (
+                  <Badge variant="secondary" className="text-xs">Build plate: {(contributor as any).build_plate_size}</Badge>
+                )}
                 {(contributor as any).build_volume_ok ? (
                   <Badge className="bg-accent/10 text-accent">✓ Volume ≥ 256mm</Badge>
                 ) : (
@@ -202,11 +235,31 @@ const Portal = () => {
                       <div>
                         <p className="text-xs text-muted-foreground">{field.label}</p>
                         {editingField === field.key ? (
+                          field.key === "build_plate_size" ? (
+                            <div className="mt-1 space-y-2">
+                              <Select value={editBuildPlatePreset || "_"} onValueChange={(v) => setEditBuildPlatePreset(v === "_" ? "" : v)}>
+                                <SelectTrigger className="h-8 text-sm w-48"><SelectValue placeholder="Tamanho" /></SelectTrigger>
+                                <SelectContent>
+                                  {BUILD_PLATE_OPTIONS.map((o) => (
+                                    <SelectItem key={o.value || "_"} value={o.value || "_"}>{o.label}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              {editBuildPlatePreset === "outro" && (
+                                <Input value={editBuildPlateCustom} onChange={(e) => setEditBuildPlateCustom(e.target.value)} placeholder="ex.: 200×200×180" className="h-8 text-sm w-48" />
+                              )}
+                              <div className="flex items-center gap-2">
+                                <button onClick={saveEdit} disabled={saving} className="text-accent hover:text-emerald-light"><Check className="w-4 h-4" /></button>
+                                <button onClick={() => setEditingField(null)} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
+                              </div>
+                            </div>
+                          ) : (
                           <div className="flex items-center gap-2 mt-1">
                             <Input value={editValue} onChange={(e) => setEditValue(e.target.value)} className="h-8 text-sm w-48" autoFocus />
                             <button onClick={saveEdit} disabled={saving} className="text-accent hover:text-emerald-light"><Check className="w-4 h-4" /></button>
                             <button onClick={() => setEditingField(null)} className="text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
                           </div>
+                          )
                         ) : (
                           <p className="text-sm font-medium text-foreground">{field.value}</p>
                         )}
