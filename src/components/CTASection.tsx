@@ -33,24 +33,32 @@ const CTASection = () => {
             a projetos de cadeiras de rodas que precisam das suas competências.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link to="/contribute">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center w-full">
+            <Link to="/contribute" className="w-full sm:w-auto">
               <Button
                 size="lg"
-                className="bg-accent text-accent-foreground hover:bg-emerald-light btn-lift font-bold text-base px-8 py-6 rounded-xl glow-accent"
+                className="w-full bg-accent text-accent-foreground hover:bg-emerald-light btn-lift font-bold text-base px-8 py-6 rounded-xl glow-accent"
               >
                 Juntar-me à Missão
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
-            <div className="flex gap-3">
-              <Link to="/donate">
-                <Button size="lg" variant="outline" className="border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10 py-6">
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+              <Link to="/donate" className="w-full sm:w-auto">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="w-full border-emerald-light/40 bg-emerald-light/15 text-primary-foreground hover:bg-emerald-light/25 hover:text-primary-foreground py-6"
+                >
                   <Heart className="w-4 h-4 mr-2" /> Doar
                 </Button>
               </Link>
-              <Link to="/request">
-                <Button size="lg" variant="outline" className="border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10 py-6">
+              <Link to="/request" className="w-full sm:w-auto">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="w-full border-primary-foreground/30 bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/20 hover:text-primary-foreground py-6"
+                >
                   <Accessibility className="w-4 h-4 mr-2" /> Pedir Ajuda
                 </Button>
               </Link>
