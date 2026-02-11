@@ -10,7 +10,20 @@ import {
 } from "@/components/ui/select";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Heart, Package, Truck, Sparkles, Check, Loader2, MessageCircle } from "lucide-react";
+import {
+  Heart,
+  Package,
+  Truck,
+  Sparkles,
+  Check,
+  Loader2,
+  MessageCircle,
+  MapPin,
+  Mail,
+  Phone,
+  Copy,
+  Smartphone,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -32,6 +45,8 @@ const Donate = () => {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
+  const mbwayNumberPretty = "+351 913 492 398";
+  const mbwayNumberDigits = "351913492398";
 
   const [form, setForm] = useState({
     name: "", email: "", amount: "", method: "mbway", message: "", publicName: false,
@@ -63,6 +78,37 @@ const Donate = () => {
     }
     setSubmitted(true);
     setSubmitting(false);
+  };
+
+  const handleCopyMbway = async () => {
+    try {
+      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(mbwayNumberDigits);
+      } else if (typeof document !== "undefined") {
+        const textArea = document.createElement("textarea");
+        textArea.value = mbwayNumberDigits;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-9999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+      } else {
+        throw new Error("Clipboard API indisponível");
+      }
+
+      toast({
+        title: "Número MB WAY copiado",
+        description: `${mbwayNumberPretty} disponível para colar na app.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Não foi possível copiar",
+        description: "Copie manualmente se necessário.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -122,14 +168,96 @@ const Donate = () => {
                     <MessageCircle className="w-4 h-4 mr-2" /> Contactar via Instagram
                   </Button>
                 </a>
-                <Button size="lg" variant="outline" onClick={() => setShowForm(!showForm)}
-                  className="border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={() => setShowForm(!showForm)}
+                  className="border-primary-foreground/40 bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/15"
+                >
                   {showForm ? "Esconder formulário" : "Registar donativo"}
                 </Button>
               </div>
             </div>
           </div>
         </div>
+      </section>
+
+      {/* Smart3DPT Contact + MB WAY */}
+      <section className="pb-12 px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-[3fr,2fr] gap-6"
+        >
+          <div className="bg-card rounded-2xl border border-border p-8 relative overflow-hidden">
+            <Sparkles className="w-10 h-10 text-accent mb-4" />
+            <h3 className="text-2xl font-black text-foreground mb-3">Smart3DPT</h3>
+            <p className="text-sm text-muted-foreground mb-6">
+              Na Smart3DPT, navegamos pelos horizontes da imaginação, materializando visões etéreas em formas tangíveis,
+              onde a criatividade se funde com a tecnologia para dar origem ao extraordinário.
+            </p>
+            <div className="space-y-4 text-sm text-foreground">
+              <div className="flex items-start gap-3">
+                <MapPin className="w-4 h-4 mt-1 text-accent" />
+                <div>
+                  <p className="font-semibold">Rua do Rameiral nº4</p>
+                  <p>3780-176</p>
+                  <p>Anadia - Portugal</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Mail className="w-4 h-4 text-accent" />
+                <a href="mailto:encomendas@smart3d.pt" className="hover:underline">
+                  encomendas@smart3d.pt
+                </a>
+              </div>
+              <div className="flex items-center gap-3">
+                <Phone className="w-4 h-4 text-accent" />
+                <a href="tel:+351913492398" className="hover:underline">
+                  {mbwayNumberPretty}
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-navy-gradient rounded-2xl p-8 text-primary-foreground relative overflow-hidden">
+            <div className="absolute inset-0 opacity-[0.05]" style={{
+              backgroundImage: `radial-gradient(circle at 1px 1px, hsl(0 0% 100%) 1px, transparent 0)`,
+              backgroundSize: "28px 28px",
+            }} />
+            <div className="relative z-10 space-y-4">
+              <Smartphone className="w-8 h-8 text-accent" />
+              <h3 className="text-xl font-black">Envie via MB WAY</h3>
+              <p className="text-sm text-primary-foreground/80">
+                Utilize o número {mbwayNumberPretty} para enviar o seu contributo imediato através da app MB WAY.
+                Se clicar no botão abaixo num dispositivo com a app instalada, a transferência abre automaticamente.
+              </p>
+              <div className="flex flex-col gap-3">
+                <Button
+                  asChild
+                  size="lg"
+                  className="bg-accent text-accent-foreground hover:bg-emerald-light btn-lift font-bold"
+                >
+                  <a href={`mbway://send?phone=${mbwayNumberDigits}`} rel="noreferrer">
+                    <Smartphone className="w-4 h-4 mr-2" /> Iniciar transferência MB WAY
+                  </a>
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={handleCopyMbway}
+                  className="border-primary-foreground/40 text-primary-foreground hover:bg-primary-foreground/10"
+                >
+                  <Copy className="w-4 h-4 mr-2" /> Copiar número MB WAY
+                </Button>
+              </div>
+              <p className="text-xs text-primary-foreground/70">
+                {mbwayNumberPretty} — custo de uma chamada para a rede móvel nacional.
+              </p>
+            </div>
+          </div>
+        </motion.div>
       </section>
 
       {/* Optional Form */}
