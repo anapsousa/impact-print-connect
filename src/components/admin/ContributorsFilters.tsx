@@ -23,6 +23,8 @@ interface ContributorsFiltersProps {
   onExperienceChange: (v: string) => void;
   buildVolume: string;
   onBuildVolumeChange: (v: string) => void;
+  canShip?: string;
+  onCanShipChange?: (v: string) => void;
 }
 
 const ContributorsFilters = ({
@@ -33,6 +35,8 @@ const ContributorsFilters = ({
   material, onMaterialChange,
   experience, onExperienceChange,
   buildVolume, onBuildVolumeChange,
+  canShip = "all",
+  onCanShipChange,
 }: ContributorsFiltersProps) => {
   return (
     <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
@@ -98,6 +102,18 @@ const ContributorsFilters = ({
           <SelectItem value="not_ok">Não confirmado</SelectItem>
         </SelectContent>
       </Select>
+      {onCanShipChange && (
+        <Select value={canShip} onValueChange={onCanShipChange}>
+          <SelectTrigger className="w-full sm:w-[120px]">
+            <SelectValue placeholder="Envia" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="yes">Sim</SelectItem>
+            <SelectItem value="no">Não</SelectItem>
+          </SelectContent>
+        </Select>
+      )}
     </div>
   );
 };

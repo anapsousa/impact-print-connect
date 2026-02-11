@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Printer, Users, Target, LogOut, Plus, Loader2,
   BarChart3, Package, Armchair, ChevronLeft, Heart, Accessibility, UserPlus, Link2, Eye,
+  ArrowUpDown, ChevronUp, ChevronDown,
 } from "lucide-react";
 import {
   Dialog,
@@ -17,6 +18,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import ProjectProgressCard from "@/components/admin/ProjectProgressCard";
@@ -51,6 +59,10 @@ const Admin = () => {
   const [filterMaterial, setFilterMaterial] = useState("all");
   const [filterExperience, setFilterExperience] = useState("all");
   const [filterBuildVolume, setFilterBuildVolume] = useState("all");
+  const [filterCanShip, setFilterCanShip] = useState("all");
+  const [sortKey, setSortKey] = useState<"name" | "location" | "printer" | "materials" | "experience" | "turnaround" | "can_ship" | "region">("name");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [groupBy, setGroupBy] = useState<"none" | "region" | "experience" | "can_ship">("region");
   const [allocateDialogOpen, setAllocateDialogOpen] = useState(false);
   const [allocateContributor, setAllocateContributor] = useState<typeof contributors[0] | null>(null);
   const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
@@ -134,9 +146,46 @@ const Admin = () => {
       if (filterExperience !== "all" && (c as any).experience_level !== filterExperience) return false;
       if (filterBuildVolume === "ok" && !(c as any).build_volume_ok) return false;
       if (filterBuildVolume === "not_ok" && (c as any).build_volume_ok) return false;
+      if (filterCanShip === "yes" && !c.can_ship) return false;
+      if (filterCanShip === "no" && c.can_ship) return false;
       return true;
     });
-  }, [contributors, filterSearch, filterRegion, filterPrinter, filterMaterial, filterExperience, filterBuildVolume]);
+  }, [contributors, filterSearch, filterRegion, filterPrinter, filterMaterial, filterExperience, filterBuildVolume, filterCanShip]);
+
+  const getSortValue = (c: (typeof contributors)[0], key: typeof sortKey): string | number | boolean => {
+    switch (key) {
+      case "name": return c.name.toLowerCase();
+      case "location": return c.location.toLowerCase();
+      case "printer": return ((c as any).printer_models ?? []).join(",").toLowerCase();
+      case "materials": return ((c as any).materials ?? ["PETG"]).join(",").toLowerCase();
+      case "experience": {
+        const o: Record<string, number> = { beginner: 0, intermediate: 1, expert: 2 };
+        return o[(c as any).experience_level] ?? 1;
+      }
+      case "turnaround": return ((c as any).turnaround_time ?? "").toLowerCase();
+      case "can_ship": return c.can_ship ? 1 : 0;
+      case "region": return (c.region ?? "").toLowerCase();
+      default: return "";
+    }
+  };
+
+  const sortedContributors = useMemo(() => {
+    const list = [...filteredContributors];
+    list.sort((a, b) => {
+      const va = getSortValue(a, sortKey);
+      const vb = getSortValue(b, sortKey);
+      const cmp = typeof va === "number" && typeof vb === "number"
+        ? va - vb
+        : String(va).localeCompare(String(vb), "pt");
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+    return list;
+  }, [filteredContributors, sortKey, sortDir]);
+
+  const regionOrder = ["norte", "centro", "lisboa", "alentejo", "algarve", "acores", "madeira"];
+  const regionNames: Record<string, string> = { norte: "Norte", centro: "Centro", lisboa: "Lisboa", alentejo: "Alentejo", algarve: "Algarve", acores: "Açores", madeira: "Madeira" };
+  const experienceOrder = ["beginner", "intermediate", "expert"];
+  const experienceNames: Record<string, string> = { beginner: "🔰 Iniciante", intermediate: "Intermédio", expert: "⭐ Experiente" };
 
   const [newProjectName, setNewProjectName] = useState("");
   const [creatingProject, setCreatingProject] = useState(false);
@@ -332,108 +381,167 @@ const Admin = () => {
                   onExperienceChange={setFilterExperience}
                   buildVolume={filterBuildVolume}
                   onBuildVolumeChange={setFilterBuildVolume}
+                  canShip={filterCanShip}
+                  onCanShipChange={setFilterCanShip}
                 />
                 <AddContributorDialog />
+              </div>
+              <div className="flex flex-wrap items-center gap-3 mb-3">
+                <span className="text-sm text-muted-foreground">Agrupar por:</span>
+                <Select value={groupBy} onValueChange={(v: "none" | "region" | "experience" | "can_ship") => setGroupBy(v)}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum</SelectItem>
+                    <SelectItem value="region">Região</SelectItem>
+                    <SelectItem value="experience">Experiência</SelectItem>
+                    <SelectItem value="can_ship">Envia</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="bg-card rounded-2xl border border-border overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
-                     <thead>
+                    <thead>
                       <tr className="border-b border-border bg-muted/30">
-                        <th className="text-left p-4 font-semibold text-foreground">Nome</th>
-                        <th className="text-left p-4 font-semibold text-foreground">Localização</th>
-                        <th className="text-left p-4 font-semibold text-foreground hidden sm:table-cell">Impressora</th>
-                        <th className="text-left p-4 font-semibold text-foreground hidden sm:table-cell">Materiais</th>
-                        <th className="text-left p-4 font-semibold text-foreground hidden md:table-cell">Experiência</th>
-                        <th className="text-left p-4 font-semibold text-foreground hidden md:table-cell">Turnaround</th>
-                        <th className="text-left p-4 font-semibold text-foreground hidden lg:table-cell">Envia</th>
-                        <th className="text-left p-4 font-semibold text-foreground">Região</th>
+                        {[
+                          { key: "name" as const, label: "Nome", className: "text-left" },
+                          { key: "location" as const, label: "Localização", className: "text-left" },
+                          { key: "printer" as const, label: "Impressora", className: "text-left hidden sm:table-cell" },
+                          { key: "materials" as const, label: "Materiais", className: "text-left hidden sm:table-cell" },
+                          { key: "experience" as const, label: "Experiência", className: "text-left hidden md:table-cell" },
+                          { key: "turnaround" as const, label: "Turnaround", className: "text-left hidden md:table-cell" },
+                          { key: "can_ship" as const, label: "Envia", className: "text-left hidden lg:table-cell" },
+                          { key: "region" as const, label: "Região", className: "text-left" },
+                        ].map(({ key, label, className }) => (
+                          <th key={key} className={`p-4 font-semibold text-foreground ${className}`}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSortKey(key);
+                                setSortDir((d) => (sortKey === key ? (d === "asc" ? "desc" : "asc") : "asc"));
+                              }}
+                              className="flex items-center gap-1 hover:text-accent transition-colors"
+                            >
+                              {label}
+                              {sortKey === key ? (sortDir === "asc" ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />) : <ArrowUpDown className="w-3.5 h-3.5 opacity-50" />}
+                            </button>
+                          </th>
+                        ))}
                         <th className="text-right p-4 font-semibold text-foreground">Ações</th>
                       </tr>
                     </thead>
                     <tbody>
                       {(() => {
-                        const regionOrder = ["norte", "centro", "lisboa", "alentejo", "algarve", "acores", "madeira"];
-                        const regionNames: Record<string, string> = { norte: "Norte", centro: "Centro", lisboa: "Lisboa", alentejo: "Alentejo", algarve: "Algarve", acores: "Açores", madeira: "Madeira" };
-                        const grouped = filteredContributors.reduce<Record<string, typeof filteredContributors>>((acc, c) => {
-                          const r = c.region || "outro";
-                          if (!acc[r]) acc[r] = [];
-                          acc[r].push(c);
+                        const renderRow = (c: (typeof contributors)[0]) => (
+                          <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
+                            <td className="p-4">
+                              <div className="flex items-center gap-1.5">
+                                <p className="font-medium text-foreground">{c.name}</p>
+                                {!(c as any).build_volume_ok && (
+                                  <span title="Volume de impressão não confirmado" className="text-destructive text-xs">⚠️</span>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground">{c.email}</p>
+                            </td>
+                            <td className="p-4 text-muted-foreground">{c.location}</td>
+                            <td className="p-4 text-muted-foreground hidden sm:table-cell">{((c as any).printer_models ?? []).join(", ") || "—"}</td>
+                            <td className="p-4 hidden sm:table-cell">
+                              <div className="flex gap-1">
+                                {((c as any).materials ?? ["PETG"]).map((m: string) => (
+                                  <Badge key={m} className={m === "TPU" ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300" : "bg-accent/10 text-accent"}>{m}</Badge>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="p-4 hidden md:table-cell">
+                              <Badge variant="secondary" className="text-xs">
+                                {(c as any).experience_level === "expert" ? "⭐ Experiente" : (c as any).experience_level === "beginner" ? "🔰 Iniciante" : "Intermédio"}
+                              </Badge>
+                            </td>
+                            <td className="p-4 text-muted-foreground text-xs hidden md:table-cell">{(c as any).turnaround_time || "—"}</td>
+                            <td className="p-4 hidden lg:table-cell">
+                              {c.can_ship ? <Badge className="bg-accent/10 text-accent">Sim</Badge> : <span className="text-muted-foreground">Não</span>}
+                            </td>
+                            <td className="p-4"><Badge variant="secondary">{c.region}</Badge></td>
+                            <td className="p-4 text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                {(c as any).token && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    title="Copiar link do portal"
+                                    onClick={() => copyPortalLink((c as any).token)}
+                                  >
+                                    <Link2 className="w-3.5 h-3.5" />
+                                  </Button>
+                                )}
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 text-xs gap-1"
+                                  onClick={() => {
+                                    setAllocateContributor(c);
+                                    setAllocateDialogOpen(true);
+                                  }}
+                                >
+                                  <UserPlus className="w-3.5 h-3.5" />
+                                  Alocar
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+
+                        if (groupBy === "none") {
+                          return sortedContributors.map(renderRow);
+                        }
+
+                        const grouped = sortedContributors.reduce<Record<string, typeof sortedContributors>>((acc, c) => {
+                          let groupKey: string;
+                          if (groupBy === "region") {
+                            groupKey = c.region || "outro";
+                          } else if (groupBy === "experience") {
+                            groupKey = (c as any).experience_level ?? "intermediate";
+                          } else {
+                            groupKey = c.can_ship ? "sim" : "nao";
+                          }
+                          if (!acc[groupKey]) acc[groupKey] = [];
+                          acc[groupKey].push(c);
                           return acc;
                         }, {});
-                        const sortedRegions = Object.keys(grouped).sort((a, b) => (regionOrder.indexOf(a) === -1 ? 99 : regionOrder.indexOf(a)) - (regionOrder.indexOf(b) === -1 ? 99 : regionOrder.indexOf(b)));
-                        return sortedRegions.map((region) => (
-                          <>
-                            <tr key={`header-${region}`} className="bg-muted/50">
+
+                        const sortedGroupKeys =
+                          groupBy === "region"
+                            ? Object.keys(grouped).sort((a, b) => (regionOrder.indexOf(a) === -1 ? 99 : regionOrder.indexOf(a)) - (regionOrder.indexOf(b) === -1 ? 99 : regionOrder.indexOf(b)))
+                            : groupBy === "experience"
+                              ? Object.keys(grouped).sort((a, b) => experienceOrder.indexOf(a) - experienceOrder.indexOf(b))
+                              : ["sim", "nao"].filter((k) => grouped[k]?.length);
+
+                        return sortedGroupKeys.flatMap((groupKey) => {
+                          const rows = grouped[groupKey] ?? [];
+                          const headerLabel =
+                            groupBy === "region"
+                              ? (regionNames[groupKey] ?? groupKey)
+                              : groupBy === "experience"
+                                ? (experienceNames[groupKey] ?? groupKey)
+                                : groupKey === "sim"
+                                  ? "Sim"
+                                  : "Não";
+                          return [
+                            <tr key={`header-${groupKey}`} className="bg-muted/50">
                               <td colSpan={9} className="p-3 text-xs font-bold text-foreground uppercase tracking-wider">
-                                {regionNames[region] ?? region} ({grouped[region].length})
+                                {headerLabel} ({rows.length})
                               </td>
-                            </tr>
-                            {grouped[region].map((c) => (
-                              <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
-                                <td className="p-4">
-                                  <div className="flex items-center gap-1.5">
-                                    <p className="font-medium text-foreground">{c.name}</p>
-                                    {!(c as any).build_volume_ok && (
-                                      <span title="Volume de impressão não confirmado" className="text-destructive text-xs">⚠️</span>
-                                    )}
-                                  </div>
-                                  <p className="text-xs text-muted-foreground">{c.email}</p>
-                                </td>
-                                <td className="p-4 text-muted-foreground">{c.location}</td>
-                                <td className="p-4 text-muted-foreground hidden sm:table-cell">{((c as any).printer_models ?? []).join(", ") || "—"}</td>
-                                <td className="p-4 hidden sm:table-cell">
-                                  <div className="flex gap-1">
-                                    {((c as any).materials ?? ["PETG"]).map((m: string) => (
-                                      <Badge key={m} className={m === "TPU" ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300" : "bg-accent/10 text-accent"}>{m}</Badge>
-                                    ))}
-                                  </div>
-                                </td>
-                                <td className="p-4 hidden md:table-cell">
-                                  <Badge variant="secondary" className="text-xs">
-                                    {(c as any).experience_level === "expert" ? "⭐ Experiente" : (c as any).experience_level === "beginner" ? "🔰 Iniciante" : "Intermédio"}
-                                  </Badge>
-                                </td>
-                                <td className="p-4 text-muted-foreground text-xs hidden md:table-cell">{(c as any).turnaround_time || "—"}</td>
-                                <td className="p-4 hidden lg:table-cell">
-                                  {c.can_ship ? <Badge className="bg-accent/10 text-accent">Sim</Badge> : <span className="text-muted-foreground">Não</span>}
-                                </td>
-                                <td className="p-4"><Badge variant="secondary">{c.region}</Badge></td>
-                                <td className="p-4 text-right">
-                                  <div className="flex items-center justify-end gap-1">
-                                    {(c as any).token && (
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8"
-                                        title="Copiar link do portal"
-                                        onClick={() => copyPortalLink((c as any).token)}
-                                      >
-                                        <Link2 className="w-3.5 h-3.5" />
-                                      </Button>
-                                    )}
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="h-8 text-xs gap-1"
-                                      onClick={() => {
-                                        setAllocateContributor(c);
-                                        setAllocateDialogOpen(true);
-                                      }}
-                                    >
-                                      <UserPlus className="w-3.5 h-3.5" />
-                                      Alocar
-                                    </Button>
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                          </>
-                        ));
+                            </tr>,
+                            ...rows.map(renderRow),
+                          ];
+                        });
                       })()}
                     </tbody>
                   </table>
-                  {filteredContributors.length === 0 && (
+                  {sortedContributors.length === 0 && (
                     <p className="text-center text-muted-foreground py-8">
                       {contributors.length === 0 ? "Ainda sem voluntários. Adicione o primeiro!" : "Nenhum voluntário corresponde aos filtros."}
                     </p>
