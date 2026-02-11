@@ -47,7 +47,7 @@ const QUICK_AMOUNTS = [10, 15, 35, 50];
 
 const mbwayNumberPretty = "+351 913 492 398";
 const mbwayNumberDigits = "351913492398";
-const instagramUrl = "https://www.instagram.com/smart3d_pt?igsh=MWliNmVibGFyMXM2ZA==";
+const instagramUrl = "https://www.instagram.com/smart3d_pt";
 const contactEmail = "encomendas@smart3d.pt";
 
 // Optional: set VITE_DONATE_IBAN and/or VITE_PAYPAL_LINK in .env to show bank/PayPal details
