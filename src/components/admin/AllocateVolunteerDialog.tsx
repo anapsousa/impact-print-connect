@@ -20,13 +20,17 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, UserPlus } from "lucide-react";
+import { Loader2, UserPlus, Copy, Mail, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+
+const PORTAL_BASE = "https://impact-print-connect.lovable.app";
 
 interface Contributor {
   id: string;
   name: string;
   region?: string;
+  email?: string;
+  token?: string;
 }
 
 interface Project {
@@ -70,6 +74,8 @@ const AllocateVolunteerDialog = ({
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [selectedPartIds, setSelectedPartIds] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
+  const [allocated, setAllocated] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const projectParts = useMemo(() => {
     if (!selectedProjectId) return [];
@@ -111,8 +117,35 @@ const AllocateVolunteerDialog = ({
     if (!next) {
       setSelectedProjectId(null);
       setSelectedPartIds(new Set());
+      setAllocated(false);
+      setCopied(false);
     }
     onOpenChange(next);
+  };
+
+  const portalUrl = contributor?.token
+    ? `${PORTAL_BASE}/portal?token=${encodeURIComponent(contributor.token)}`
+    : "";
+
+  const copyPortalLink = async () => {
+    if (!portalUrl) return;
+    try {
+      await navigator.clipboard.writeText(portalUrl);
+      setCopied(true);
+      toast({ title: "Link copiado", description: "Pode colar no email ou mensagem ao voluntário." });
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast({ title: "Erro", description: "Não foi possível copiar.", variant: "destructive" });
+    }
+  };
+
+  const openMailto = () => {
+    if (!contributor?.email || !portalUrl) return;
+    const subject = encodeURIComponent("Foi-lhe atribuída uma peça — PrintImpact Connect");
+    const body = encodeURIComponent(
+      `Olá ${contributor.name},\n\nFoi-lhe atribuída uma ou mais peças no projeto de impressão 3D solidária.\n\nAceda ao seu portal aqui:\n${portalUrl}\n\nObrigado,\nPrintImpact Connect`
+    );
+    window.location.href = `mailto:${contributor.email}?subject=${subject}&body=${body}`;
   };
 
   const handleSave = async () => {
@@ -137,14 +170,10 @@ const AllocateVolunteerDialog = ({
       return;
     }
 
-    toast({
-      title: "Voluntário atribuído",
-      description: `${contributor.name} foi atribuído a ${partIds.length} peça(s).`,
-    });
     queryClient.invalidateQueries({ queryKey: ["admin-parts"] });
     queryClient.invalidateQueries({ queryKey: ["admin-projects"] });
-    handleOpenChange(false);
     setSaving(false);
+    setAllocated(true);
   };
 
   if (!contributor) return null;
@@ -155,9 +184,59 @@ const AllocateVolunteerDialog = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <UserPlus className="w-5 h-5 text-accent" />
-            Atribuir voluntário a peças
+            {allocated ? "Link do portal" : "Atribuir voluntário a peças"}
           </DialogTitle>
         </DialogHeader>
+
+        {allocated ? (
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              <strong className="text-foreground">{contributor.name}</strong> foi atribuído. Envie o link do portal ao voluntário (por email, WhatsApp, etc.).
+            </p>
+            {portalUrl ? (
+              <>
+                <div className="p-3 rounded-xl bg-muted/50 border border-border break-all text-xs text-foreground font-mono">
+                  {portalUrl}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={copyPortalLink}
+                  >
+                    {copied ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copied ? "Copiado" : "Copiar link"}
+                  </Button>
+                  {contributor.email && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5"
+                      onClick={openMailto}
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                      Abrir email
+                    </Button>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  &quot;Abrir email&quot; abre o seu cliente de email com o destinatário e uma mensagem sugerida (pode editar antes de enviar).
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                O link do portal não está disponível para este voluntário. Pode copiá-lo na lista de voluntários (ícone de link).
+              </p>
+            )}
+            <DialogFooter>
+              <Button onClick={() => handleOpenChange(false)}>Fechar</Button>
+            </DialogFooter>
+          </div>
+        ) : (
+          <>
         <div className="space-y-4 flex-1 min-h-0 flex flex-col">
           <div className="p-3 rounded-xl bg-muted/50 border border-border">
             <p className="text-sm font-medium text-foreground">{contributor.name}</p>
@@ -284,6 +363,8 @@ const AllocateVolunteerDialog = ({
             Atribuir {selectedPartIds.size > 0 ? `(${selectedPartIds.size})` : ""}
           </Button>
         </DialogFooter>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -60,6 +60,15 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
+## Notifying volunteers when they’re allocated a part
+
+The app does **not** use an email API (no Resend or other provider required). After you allocate a part to a volunteer:
+
+- **From the allocation dialog:** After clicking “Atribuir”, the dialog shows the volunteer’s **portal link**. Use **“Copiar link”** to copy it and **“Abrir email”** to open your default email client with a pre-filled message to the volunteer (you can edit and send).
+- **From the contributors list:** Each row has a **link icon** (🔗). Click it to copy that volunteer’s portal link so you can paste it into an email, WhatsApp, etc.
+
+Portal link format: **https://impact-print-connect.lovable.app/portal?token=...**
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.

@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Printer, Users, Target, LogOut, Plus, Loader2,
-  BarChart3, Package, Armchair, ChevronLeft, Heart, Accessibility, UserPlus,
+  BarChart3, Package, Armchair, ChevronLeft, Heart, Accessibility, UserPlus, Link2,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
@@ -19,10 +19,22 @@ import AddContributorDialog from "@/components/admin/AddContributorDialog";
 import ContributorsFilters from "@/components/admin/ContributorsFilters";
 import AllocateVolunteerDialog from "@/components/admin/AllocateVolunteerDialog";
 
+const PORTAL_BASE = "https://impact-print-connect.lovable.app";
+
 const Admin = () => {
   const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const copyPortalLink = async (token: string) => {
+    const url = `${PORTAL_BASE}/portal?token=${encodeURIComponent(token)}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({ title: "Link copiado", description: "Pode colar no email ou mensagem ao voluntário." });
+    } catch {
+      toast({ title: "Erro ao copiar", variant: "destructive" });
+    }
+  };
   const queryClient = useQueryClient();
   const { data: stats } = useDashboardStats();
   const [activeTab, setActiveTab] = useState<"overview" | "contributors" | "projects" | "requests" | "donations">("overview");
@@ -381,18 +393,31 @@ const Admin = () => {
                                 </td>
                                 <td className="p-4"><Badge variant="secondary">{c.region}</Badge></td>
                                 <td className="p-4 text-right">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-8 text-xs gap-1"
-                                    onClick={() => {
-                                      setAllocateContributor(c);
-                                      setAllocateDialogOpen(true);
-                                    }}
-                                  >
-                                    <UserPlus className="w-3.5 h-3.5" />
-                                    Alocar
-                                  </Button>
+                                  <div className="flex items-center justify-end gap-1">
+                                    {(c as any).token && (
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        title="Copiar link do portal"
+                                        onClick={() => copyPortalLink((c as any).token)}
+                                      >
+                                        <Link2 className="w-3.5 h-3.5" />
+                                      </Button>
+                                    )}
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-8 text-xs gap-1"
+                                      onClick={() => {
+                                        setAllocateContributor(c);
+                                        setAllocateDialogOpen(true);
+                                      }}
+                                    >
+                                      <UserPlus className="w-3.5 h-3.5" />
+                                      Alocar
+                                    </Button>
+                                  </div>
                                 </td>
                               </tr>
                             ))}

@@ -75,6 +75,13 @@ const ProjectPartsList = ({ parts, contributors }: ProjectPartsListProps) => {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
       queryClient.invalidateQueries({ queryKey: ["admin-parts"] });
+      const contributorId = updates.assigned_contributor_id as string | null | undefined;
+      if (contributorId) {
+        toast({
+          title: "Voluntário atribuído",
+          description: "Copie o link do portal na lista de voluntários (ícone de link) e envie ao voluntário.",
+        });
+      }
     }
     setUpdatingId(null);
   };
