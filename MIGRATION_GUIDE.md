@@ -1,8 +1,8 @@
-# 🚀 Guia de Migração: Lovable → Vercel + Supabase
+# 🚀 Guia de Migração: Lovable → Vercel + Supabase + Resend
 
 > **Projeto**: Impact Print Connect
 > **Data**: 2026-02-14
-> **Duração estimada**: 2-4 horas
+> **Duração estimada**: 3-5 horas
 > **Risco**: Baixo (Lovable continua ativo durante migração)
 
 ---
@@ -10,11 +10,17 @@
 ## 📋 Checklist Geral
 
 - [ ] Fase 1: Backup completo (30-45 min)
-- [ ] Fase 2: Criar nova infraestrutura (20-30 min)
+- [ ] Fase 2: Criar nova infraestrutura (30-40 min) - **inclui Resend**
 - [ ] Fase 3: Migração de dados (30-60 min)
-- [ ] Fase 4: Atualizar código (15-20 min)
+- [ ] Fase 4: Atualizar código (20-30 min) - **inclui e-mails**
 - [ ] Fase 5: Deploy Vercel (10-15 min)
-- [ ] Fase 6: Testes e validação (20-30 min)
+- [ ] Fase 6: Testes e validação (30-40 min) - **inclui e-mails**
+
+**Stack Completa:**
+- ✅ **Vercel** (Hosting) - Free
+- ✅ **Supabase** (Database) - Free
+- ✅ **Resend** (E-mails) - Free
+- **Total**: €0/mês
 
 ---
 
@@ -141,7 +147,33 @@ anon key: eyJ...
 service_role key: eyJ... (SECRETO - NÃO PARTILHAR)
 ```
 
-### 2.4 Criar Conta Vercel
+### 2.4 Criar Conta Resend (E-mails Automáticos)
+
+1. Ir a [resend.com](https://resend.com)
+2. **Sign Up** (GitHub recomendado)
+3. Verificar email
+
+#### **2.4.1 Criar API Key**
+1. **API Keys** → "Create API Key"
+2. **Name**: `Impact Print Connect`
+3. **Permission**: `Sending access`
+4. Copiar e guardar: `re_xxxxxxxxxxxxxxxxxxxxx`
+
+⚠️ **IMPORTANTE**: Guardar em `new_resend_credentials.txt`
+
+#### **2.4.2 Configurar Domínio** (Opcional agora, necessário para produção)
+
+**Opção A - Domínio Próprio:**
+- Adicionar DNS records (TXT e MX)
+- Aguardar verificação
+
+**Opção B - Temporário:**
+- Usar `onboarding@resend.dev`
+- Configurar domínio próprio depois
+
+📝 **Ver detalhes completos em**: [RESEND_SETUP.md](RESEND_SETUP.md)
+
+### 2.5 Criar Conta Vercel
 
 1. Ir a [vercel.com](https://vercel.com)
 2. **Sign Up** com GitHub
@@ -345,7 +377,13 @@ Adicionar:
 cp .env .env.lovable.backup
 ```
 
-### 4.2 Atualizar .env com Novas Credenciais
+### 4.2 Instalar Resend Package
+
+```bash
+npm install resend
+```
+
+### 4.3 Atualizar .env com Novas Credenciais
 
 Editar `.env`:
 
@@ -354,9 +392,22 @@ Editar `.env`:
 VITE_SUPABASE_PROJECT_ID="[NOVO_PROJECT_ID]"
 VITE_SUPABASE_URL="https://[NOVO_PROJECT_ID].supabase.co"
 VITE_SUPABASE_PUBLISHABLE_KEY="[NOVO_ANON_KEY]"
+
+# Resend (E-mails)
+VITE_RESEND_API_KEY="re_xxxxxxxxxxxxxxxxxxxxx"
 ```
 
-### 4.3 Testar Localmente
+### 4.4 Criar Serviço de E-mail (Opcional - pode fazer depois)
+
+Criar `src/services/emailService.ts` conforme [RESEND_SETUP.md](RESEND_SETUP.md)
+
+**Funcionalidades**:
+- ✉️ E-mail de boas-vindas a voluntários
+- 🔐 Token de acesso ao portal
+- 🦽 Notificação de atribuição a projeto
+- ✅ Confirmação de pedido de beneficiário
+
+### 4.5 Testar Localmente
 
 ```bash
 npm run dev
@@ -369,6 +420,7 @@ npm run dev
 - ✅ Dados aparecem (contributors, parts, etc.)
 - ✅ Formulários funcionam
 - ✅ Sem erros no console
+- 🆕 **(Opcional)** Testar envio de e-mail (se implementaste)
 
 ### 4.4 Commit dos Ficheiros de Configuração
 
@@ -403,9 +455,13 @@ Adicionar:
 VITE_SUPABASE_PROJECT_ID = [NOVO_PROJECT_ID]
 VITE_SUPABASE_URL = https://[NOVO_PROJECT_ID].supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY = [NOVO_ANON_KEY]
+
+VITE_RESEND_API_KEY = re_xxxxxxxxxxxxxxxxxxxxx
 ```
 
-⚠️ **IMPORTANTE**: Usar o **novo** Supabase, não o Lovable!
+⚠️ **IMPORTANTE**:
+- Usar o **novo** Supabase, não o Lovable!
+- Usar a API key do **Resend** que criaste
 
 ### 5.3 Deploy
 
@@ -441,6 +497,10 @@ Abrir: `https://impact-print-connect.vercel.app`
 - [ ] Sem erros no console (F12)
 - [ ] Mobile responsivo funciona
 - [ ] Todas as páginas carregam (routing funciona)
+- 🆕 [ ] **E-mails automáticos funcionam:**
+  - [ ] Registo de voluntário → recebe e-mail boas-vindas
+  - [ ] Pedido de beneficiário → recebe confirmação
+  - [ ] Verificar Resend Dashboard → Logs (e-mails entregues)
 
 ### 6.3 Verificar Performance
 
@@ -506,6 +566,29 @@ Após 1-2 semanas de testes bem-sucedidos:
 - Adicionar URL da Vercel nas Redirect URLs do Supabase
 - Verificar que anon key está correto
 
+### Problema: E-mails não são enviados
+
+**Solução:**
+1. Verificar Resend Dashboard → Logs para ver status
+2. Confirmar que `VITE_RESEND_API_KEY` está correto
+3. Verificar console do browser para erros
+4. Testar com e-mail pessoal (não domínio corporativo)
+5. Verificar spam folder
+
+### Problema: E-mails marcados como spam
+
+**Solução:**
+- Configurar domínio próprio no Resend (em vez de resend.dev)
+- Adicionar records DNS (SPF, DKIM, MX)
+- Aguardar propagação DNS (~24h)
+
+### Problema: Domínio não verifica no Resend
+
+**Solução:**
+1. Verificar records DNS com: `dig TXT _resend.seudominio.pt`
+2. Aguardar propagação (pode demorar até 24h)
+3. Usar temporariamente `onboarding@resend.dev`
+
 ---
 
 ## 🔐 Segurança
@@ -525,13 +608,19 @@ Após 1-2 semanas de testes bem-sucedidos:
 
 ## 📊 Custos Finais
 
-| Serviço | Custo Mensal | Custo Anual |
-|---------|--------------|-------------|
-| **Vercel Free** | €0 | €0 |
-| **Supabase Free** | €0 | €0 |
-| **TOTAL** | **€0** | **€0** |
+| Serviço | Custo Mensal | Custo Anual | Limites |
+|---------|--------------|-------------|---------|
+| **Vercel Free** | €0 | €0 | 100 GB bandwidth |
+| **Supabase Free** | €0 | €0 | 500 MB database |
+| **Resend Free** | €0 | €0 | 3,000 e-mails/mês |
+| **TOTAL** | **€0** | **€0** | Suficiente por anos! |
 
-**vs. Contabo**: €4.50/mês = €54/ano 💰
+**vs. Contabo + SMTP**: €4.50/mês + config = €54+/ano 💰
+
+### **Uso Estimado vs. Limites:**
+- **Vercel**: ~5-10 GB/mês de 100 GB (5-10%) ✅
+- **Supabase**: 250 MB de 500 MB (50%) ✅
+- **Resend**: ~85 e-mails de 3,000 (3%) ✅
 
 ---
 
@@ -539,14 +628,18 @@ Após 1-2 semanas de testes bem-sucedidos:
 
 - [ ] Backup completo criado
 - [ ] Novo Supabase configurado
+- [ ] Novo Resend configurado (API key + domínio)
 - [ ] Dados migrados (contagens conferem)
 - [ ] RLS configurado
-- [ ] Código atualizado (.env)
-- [ ] Teste local passou
+- [ ] Código atualizado (.env com Supabase + Resend)
+- [ ] Package `resend` instalado
+- [ ] Teste local passou (incluindo e-mails opcionais)
 - [ ] vercel.json criado
 - [ ] Deploy na Vercel bem-sucedido
 - [ ] URLs atualizados no Supabase
+- [ ] Environment vars na Vercel (incluindo RESEND_API_KEY)
 - [ ] Testes em produção passaram
+- [ ] E-mails testados em produção (opcional)
 - [ ] Performance verificada
 - [ ] Lovable em standby (manter por segurança)
 
