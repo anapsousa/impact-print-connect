@@ -24,7 +24,7 @@ const Navbar = () => {
         <div className="hidden md:flex items-center gap-1">
           <Link to="/">
             <Button variant="ghost" size="sm" className={`text-primary-foreground/70 hover:text-primary-foreground hover:bg-navy-light/30 ${isActive("/") ? "text-primary-foreground bg-navy-light/20" : ""}`}>
-              Painel
+              Início
             </Button>
           </Link>
           <Link to="/auth">
@@ -69,7 +69,7 @@ const Navbar = () => {
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="md:hidden bg-navy-deep border-t border-navy-light/20 overflow-hidden">
             <div className="px-6 py-4 flex flex-col gap-2">
               <Link to="/" onClick={() => setMobileOpen(false)}>
-                <Button variant="ghost" className="w-full justify-start text-primary-foreground/70 hover:text-primary-foreground hover:bg-navy-light/30">Painel</Button>
+                <Button variant="ghost" className="w-full justify-start text-primary-foreground/70 hover:text-primary-foreground hover:bg-navy-light/30">Início</Button>
               </Link>
               <Link to="/auth" onClick={() => setMobileOpen(false)}>
                 <Button variant="ghost" className="w-full justify-start text-primary-foreground/70 hover:text-primary-foreground hover:bg-navy-light/30">
