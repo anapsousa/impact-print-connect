@@ -6,6 +6,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const PORTAL_BASE = "https://3dcomproposito.vercel.app";
 const MAKERWORLD_URL = "https://makerworld.com/en/models/2066081-3d-toddler-mobility-trainer";
 const MAKER_GUIDE_URL = "https://bsbqmqfznkozqagdhvoj.supabase.co/storage/v1/object/public/resources/TMT_MAKER_GUIDE_rev_A_compressed.pdf";
+const LOGO_URL = "https://3dcomproposito.vercel.app/3D%20com%20Prop%C3%B3sito.png";
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const FROM_EMAIL = Deno.env.get("FROM_EMAIL") ?? "3D com Propósito <onboarding@resend.dev>";
 
@@ -76,7 +77,8 @@ Deno.serve(async (req) => {
 <head><meta charset="utf-8"></head>
 <body style="font-family: system-ui, sans-serif; line-height: 1.5; color: #333; max-width: 560px; margin: 0 auto;">
   <div style="background: #10b981; color: white; padding: 30px; text-align: center; border-radius: 12px 12px 0 0;">
-    <h1 style="margin: 0; font-size: 24px;">🎉 Bem-vindo ao 3D com Propósito!</h1>
+    <img src="${LOGO_URL}" alt="3D com Propósito" style="max-width: 200px; height: auto; margin-bottom: 15px;" />
+    <h1 style="margin: 0; font-size: 24px;">🎉 Bem-vindo!</h1>
   </div>
 
   <div style="padding: 30px; background: #f9f9f9;">
