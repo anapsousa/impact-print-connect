@@ -552,7 +552,7 @@ function escapeHtml(s: string): string {
 ### **Secrets necessários no Supabase**
 
 Já configurados:
-- ✅ `RESEND_API_KEY`: `re_KX9CrciE_48muEBKnZ2nmoq66kTMJiED7`
+- ✅ `RESEND_API_KEY`: Configurado no Supabase (secret não exposto)
 - ✅ `FROM_EMAIL`: Email configurado com domínio verificado no Resend
 
 Auto-configurados pelo Supabase:
