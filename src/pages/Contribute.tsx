@@ -161,14 +161,11 @@ const Contribute = () => {
       const { error: emailError } = await supabase.functions.invoke('volunteer-welcome', {
         body: { contributor_id: data.id }
       });
-
       if (emailError) {
         console.error('Erro ao enviar email de boas-vindas:', emailError);
-        // Não bloquear o registo se o email falhar
       }
     } catch (e) {
       console.error('Erro ao enviar email de boas-vindas:', e);
-      // Não bloquear o registo se o email falhar
     }
 
     setPortalLink(`${window.location.origin}/portal?token=${data.token}`);
