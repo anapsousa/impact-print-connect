@@ -4,8 +4,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const PORTAL_BASE = "https://3dcomproposito.vercel.app";
-const MAKERWORLD_URL = "https://makerworld.com/en/models/2066081-3d-toddler-mobility-trainer";
-const MAKER_GUIDE_URL = "https://bsbqmqfznkozqagdhvoj.supabase.co/storage/v1/object/public/resources/TMT_MAKER_GUIDE_rev_A_compressed.pdf";
 const LOGO_URL = "https://3dcomproposito.vercel.app/logo.png";
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const FROM_EMAIL = Deno.env.get("FROM_EMAIL") ?? "3D com Propósito <onboarding@resend.dev>";
@@ -103,18 +101,7 @@ Deno.serve(async (req) => {
       <li>Revê os teus dados de registo</li>
       <li>Define uma password para acesso futuro</li>
       <li>Aguarda atribuição de projetos (vais receber email)</li>
-      <li>Consulta os recursos para impressão</li>
     </ol>
-
-    <div style="background: #e0f2fe; padding: 15px; border-radius: 8px; margin: 20px 0;">
-      <h4 style="margin-top: 0; color: #0369a1;">📄 Recursos para Impressão:</h4>
-      <p style="margin: 5px 0;">
-        <a href="${MAKER_GUIDE_URL}" style="color: #0369a1; text-decoration: underline;">📥 Descarregar Guia do Maker (PDF)</a>
-      </p>
-      <p style="margin: 5px 0;">
-        <a href="${MAKERWORLD_URL}" style="color: #0369a1; text-decoration: underline;">🔗 Ver Ficheiros STL no MakerWorld</a>
-      </p>
-    </div>
 
     <p style="margin-top: 30px;"><strong>Obrigado por fazeres parte desta causa!</strong> 💚</p>
 
