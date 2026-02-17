@@ -1,6 +1,6 @@
 # PrintImpact Connect
 
-Aplicação web que coordena voluntários com impressoras 3D para fabricar peças de cadeiras de rodas para crianças em Portugal.
+A web application that coordinates 3D printing volunteers to manufacture wheelchair parts for children in Portugal.
 
 **URL**: https://www.3dcomproposito.pt
 
@@ -12,33 +12,33 @@ Aplicação web que coordena voluntários com impressoras 3D para fabricar peça
 - shadcn-ui
 - Tailwind CSS
 
-## Como correr localmente
+## Running Locally
 
 ```sh
-# Clonar o repositório
+# Clone the repository
 git clone <YOUR_GIT_URL>
 
-# Entrar na pasta do projeto
+# Navigate to the project directory
 cd <YOUR_PROJECT_NAME>
 
-# Instalar dependências
+# Install dependencies
 npm i
 
-# Iniciar servidor de desenvolvimento
+# Start the development server
 npm run dev
 ```
 
-## Notificar voluntários quando lhes é atribuída uma peça
+## Notifying Volunteers When Allocated a Part
 
-A app **não** usa uma API de email. Após atribuires uma peça a um voluntário:
+The app does **not** use an email API. After allocating a part to a volunteer:
 
-- **No diálogo de alocação:** Após clicar em "Atribuir", o diálogo mostra o **link do portal** do voluntário. Usa **"Copiar link"** para copiar e **"Abrir email"** para abrir o cliente de email com uma mensagem pré-preenchida.
-- **Na lista de contribuidores:** Cada linha tem um **ícone de link** (🔗). Clica para copiar o link do portal desse voluntário.
+- **From the allocation dialog:** After clicking "Atribuir", the dialog shows the volunteer's **portal link**. Use **"Copiar link"** to copy it and **"Abrir email"** to open your default email client with a pre-filled message.
+- **From the contributors list:** Each row has a **link icon** (🔗). Click it to copy that volunteer's portal link and paste it into an email, WhatsApp, etc.
 
-Formato do link do portal: **https://www.3dcomproposito.pt/portal?token=...**
+Portal link format: **https://www.3dcomproposito.pt/portal?token=...**
 
-## Deploy
+## Deployment
 
-O projeto está deployed no Vercel. Push para o repositório despoleta deploy automático.
+The project is deployed on Vercel. Pushing to the repository automatically triggers a new deployment.
 
-- Domínio: https://www.3dcomproposito.pt
+- Domain: https://www.3dcomproposito.pt
