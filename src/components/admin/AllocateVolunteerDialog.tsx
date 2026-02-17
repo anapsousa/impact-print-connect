@@ -141,9 +141,9 @@ const AllocateVolunteerDialog = ({
 
   const openMailto = () => {
     if (!contributor?.email || !portalUrl) return;
-    const subject = encodeURIComponent("Foi-lhe atribuída uma peça — PrintImpact Connect");
+    const subject = encodeURIComponent("Foi-lhe atribuída uma peça — 3D com Propósito");
     const body = encodeURIComponent(
-      `Olá ${contributor.name},\n\nFoi-lhe atribuída uma ou mais peças no projeto de impressão 3D solidária.\n\nAceda ao seu portal aqui:\n${portalUrl}\n\nObrigado,\nPrintImpact Connect`
+      `Olá ${contributor.name},\n\nFoi-lhe atribuída uma ou mais peças no projeto de impressão 3D solidária.\n\nAceda ao seu portal aqui:\n${portalUrl}\n\nObrigado,\n3D com Propósito`
     );
     window.location.href = `mailto:${contributor.email}?subject=${subject}&body=${body}`;
   };

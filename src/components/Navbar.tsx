@@ -17,7 +17,7 @@ const Navbar = () => {
             <Printer className="w-5 h-5 text-accent-foreground" />
           </div>
           <span className="text-lg font-bold text-primary-foreground tracking-tight">
-            PrintImpact <span className="text-accent font-medium">Connect</span>
+            3D com <span className="text-accent font-medium">Propósito</span>
           </span>
         </Link>
 

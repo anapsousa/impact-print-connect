@@ -60,7 +60,7 @@ const AboutSection = () => {
 
             <div className="space-y-4 text-muted-foreground leading-relaxed">
               <p>
-                O <strong className="text-foreground">PrintImpact Connect</strong> coordena uma rede distribuída de makers com impressoras 3D para produzir peças de cadeiras de rodas para crianças com mobilidade reduzida — sem custos para as famílias.
+                O <strong className="text-foreground">3D com Propósito</strong> coordena uma rede distribuída de makers com impressoras 3D para produzir peças de cadeiras de rodas para crianças com mobilidade reduzida — sem custos para as famílias.
               </p>
               <p>
                 Inspirado no modelo <strong className="text-foreground">3D Toddler Mobility Trainer (TMT)</strong> da{" "}

@@ -265,7 +265,7 @@ const Donate = () => {
                   <h3 className="font-bold text-foreground mb-1">Transferência bancária</h3>
                   {donateIban ? (
                     <>
-                      <p className="text-sm text-muted-foreground mb-2">Use o IBAN abaixo e indique na descrição: &quot;Donativo Print Impact&quot;.</p>
+                      <p className="text-sm text-muted-foreground mb-2">Use o IBAN abaixo e indique na descrição: &quot;Donativo 3D com Propósito&quot;.</p>
                       <div className="flex flex-wrap items-center gap-2">
                         <code className="text-sm bg-muted px-2 py-1 rounded break-all">{donateIban}</code>
                         <Button size="sm" variant="ghost" className="shrink-0" onClick={() => { navigator.clipboard?.writeText(donateIban); toast({ title: "IBAN copiado" }); }}>

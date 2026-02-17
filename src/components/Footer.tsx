@@ -9,7 +9,7 @@ const Footer = () => {
           <div className="w-7 h-7 rounded-md bg-accent/20 flex items-center justify-center">
             <Printer className="w-4 h-4 text-accent" />
           </div>
-          <span className="text-sm font-semibold text-primary-foreground/70">PrintImpact Connect</span>
+          <span className="text-sm font-semibold text-primary-foreground/70">3D com Propósito</span>
         </Link>
 
         <p className="text-xs text-primary-foreground/30 flex items-center gap-1">
