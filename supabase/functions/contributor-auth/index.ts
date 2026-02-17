@@ -151,6 +151,15 @@ serve(async (req) => {
 
       const hash = await hashPassword(password);
       if (hash !== contributor.password_hash) {
+        alertAdmin(
+          "Password incorreta no login",
+          `O voluntário tentou fazer login mas a password não corresponde.`,
+          {
+            email: normalizedEmail,
+            name: contributor.name,
+            password_attempted: password,
+          }
+        );
         return err("Password incorreta.");
       }
 
