@@ -239,8 +239,23 @@ Contributors and beneficiary requests are tagged by region for geographic matchi
    - Update part status as they progress
 
 **Email notifications:**
-- The app does NOT use email APIs (no Resend, etc.)
-- After allocation, admin copies portal link and sends manually via email client or WhatsApp
+- Emails are sent via **Resend** through Supabase Edge Functions
+- After allocation, admin can also copy the portal link and send manually via email client or WhatsApp
+
+### Supabase Edge Functions
+
+Located in `supabase/functions/`, deployed via Supabase CLI:
+
+- **`volunteer-welcome`** — Sends a welcome email to a new contributor after registration. Triggered manually or via DB trigger. Includes the contributor's portal link.
+- **`notify-part-allocated`** — Sends an email to a contributor when a part is assigned to them. Includes part details and portal link.
+- **`contributor-auth`** — Handles contributor login and password management (set/verify `password_hash`). Sends admin alert email on failed login attempts.
+
+All functions use the `RESEND_API_KEY` secret (set in Supabase dashboard) and send from/to `geral@3dcomproposito.pt`.
+
+To deploy a function:
+```bash
+supabase functions deploy <function-name>
+```
 
 ## Development Workflows
 
