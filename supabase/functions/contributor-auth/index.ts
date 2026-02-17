@@ -7,6 +7,10 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { encode as encodeHex } from "https://deno.land/std@0.168.0/encoding/hex.ts";
 
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const FROM_EMAIL = Deno.env.get("FROM_EMAIL") ?? "3D com Propósito <onboarding@resend.dev>";
+const ADMIN_EMAIL = "geral@3dcomproposito.pt";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -24,6 +28,45 @@ function err(message: string) {
     status: 200, // Always 200 so supabase client keeps res.data accessible
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+}
+
+// Send error alert to admin — fire-and-forget, never blocks the response
+async function alertAdmin(context: string, detail: string, extra?: object) {
+  if (!RESEND_API_KEY) return;
+  const timestamp = new Date().toISOString();
+  const extraHtml = extra
+    ? `<pre style="background:#f4f4f4;padding:12px;border-radius:6px;font-size:12px;">${JSON.stringify(extra, null, 2)}</pre>`
+    : "";
+  try {
+    await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${RESEND_API_KEY}` },
+      body: JSON.stringify({
+        from: FROM_EMAIL,
+        to: [ADMIN_EMAIL],
+        subject: `⚠️ Erro no Login de Voluntário — ${context}`,
+        html: `
+          <div style="font-family:sans-serif;max-width:560px;margin:0 auto;">
+            <div style="background:#dc2626;color:white;padding:20px;border-radius:8px 8px 0 0;">
+              <h2 style="margin:0;">⚠️ Erro no Login de Voluntário</h2>
+            </div>
+            <div style="background:#f9f9f9;padding:20px;border-radius:0 0 8px 8px;">
+              <p><strong>Contexto:</strong> ${context}</p>
+              <p><strong>Detalhe:</strong> ${detail}</p>
+              <p><strong>Timestamp:</strong> ${timestamp}</p>
+              ${extraHtml}
+              <hr style="margin:20px 0;border:none;border-top:1px solid #eee;">
+              <p style="font-size:12px;color:#666;">
+                Este é um email automático de monitorização.<br>
+                <strong>3D com Propósito</strong> — contributor-auth edge function
+              </p>
+            </div>
+          </div>`,
+      }),
+    });
+  } catch {
+    // Silently ignore — alerting must never break the main flow
+  }
 }
 
 async function hashPassword(password: string): Promise<string> {
@@ -58,7 +101,12 @@ serve(async (req) => {
       .eq("email", normalizedEmail)
       .maybeSingle();
 
-    if (lookupErr || !contributor) {
+    if (lookupErr) {
+      alertAdmin("Erro na query à BD", "Falha ao procurar contributor por email", { email: normalizedEmail, error: lookupErr.message });
+      return err("Erro interno. Tente novamente.");
+    }
+
+    if (!contributor) {
       return err("Não encontrámos nenhum voluntário com esse email.");
     }
 
@@ -84,6 +132,7 @@ serve(async (req) => {
         .eq("id", contributor.id);
 
       if (updateErr) {
+        alertAdmin("Erro ao guardar password", "Falha no UPDATE de password_hash", { contributor_id: contributor.id, error: updateErr.message });
         return err("Erro ao guardar password.");
       }
 
@@ -111,6 +160,7 @@ serve(async (req) => {
     return err("Ação inválida.");
 
   } catch (_err) {
+    alertAdmin("Erro interno (exception)", "Exception não capturada na edge function", { error: String(_err) });
     return err("Erro interno. Tente novamente.");
   }
 });
