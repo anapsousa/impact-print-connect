@@ -1,3 +1,8 @@
+// contributor-auth edge function
+// Handles contributor authentication via email + password (SHA-256 hash)
+// Always returns HTTP 200 — errors are indicated via { ok: false, error: "..." } in body
+// This is intentional: supabase.functions.invoke() discards res.data on non-200 responses
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { encode as encodeHex } from "https://deno.land/std@0.168.0/encoding/hex.ts";
@@ -6,6 +11,20 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+function ok(data: object) {
+  return new Response(JSON.stringify({ ok: true, ...data }), {
+    status: 200,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+function err(message: string) {
+  return new Response(JSON.stringify({ ok: false, error: message }), {
+    status: 200, // Always 200 so supabase client keeps res.data accessible
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
 
 async function hashPassword(password: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -23,10 +42,7 @@ serve(async (req) => {
     const { email, password, action } = await req.json();
 
     if (!email || !email.includes("@")) {
-      return new Response(JSON.stringify({ error: "Email inválido" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return err("Email inválido.");
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -43,31 +59,22 @@ serve(async (req) => {
       .maybeSingle();
 
     if (lookupErr || !contributor) {
-      return new Response(
-        JSON.stringify({ error: "Não encontrámos nenhum voluntário com esse email." }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return err("Não encontrámos nenhum voluntário com esse email.");
     }
 
-    // Action: check — just check if contributor exists and has password
+    // Action: check — check if contributor exists and has password set
     if (action === "check") {
-      return new Response(
-        JSON.stringify({
-          exists: true,
-          has_password: !!contributor.password_hash,
-          name: contributor.name,
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return ok({
+        exists: true,
+        has_password: !!contributor.password_hash,
+        name: contributor.name,
+      });
     }
 
-    // Action: set-password — set password for first time
+    // Action: set-password — define password for the first time
     if (action === "set-password") {
       if (!password || password.length < 4) {
-        return new Response(
-          JSON.stringify({ error: "A password deve ter pelo menos 4 caracteres." }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return err("A password deve ter pelo menos 4 caracteres.");
       }
 
       const hash = await hashPassword(password);
@@ -77,56 +84,33 @@ serve(async (req) => {
         .eq("id", contributor.id);
 
       if (updateErr) {
-        return new Response(
-          JSON.stringify({ error: "Erro ao guardar password." }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return err("Erro ao guardar password.");
       }
 
-      return new Response(
-        JSON.stringify({ token: contributor.token }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return ok({ token: contributor.token });
     }
 
     // Action: login — verify password
     if (action === "login") {
       if (!password) {
-        return new Response(
-          JSON.stringify({ error: "Introduza a sua password." }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return err("Introduza a sua password.");
       }
 
       if (!contributor.password_hash) {
-        return new Response(
-          JSON.stringify({ error: "Ainda não definiu password. Por favor defina uma." }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return err("Ainda não definiu password. Por favor defina uma.");
       }
 
       const hash = await hashPassword(password);
       if (hash !== contributor.password_hash) {
-        return new Response(
-          JSON.stringify({ error: "Password incorreta." }),
-          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return err("Password incorreta.");
       }
 
-      return new Response(
-        JSON.stringify({ token: contributor.token }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return ok({ token: contributor.token });
     }
 
-    return new Response(
-      JSON.stringify({ error: "Ação inválida." }),
-      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  } catch (err) {
-    return new Response(
-      JSON.stringify({ error: "Erro interno." }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return err("Ação inválida.");
+
+  } catch (_err) {
+    return err("Erro interno. Tente novamente.");
   }
 });

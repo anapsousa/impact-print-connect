@@ -135,8 +135,8 @@ const Portal = () => {
         body: { email: recoveryEmail.trim(), action: "check" },
       });
       const data = res.data;
-      if (res.error || !data?.exists) {
-        setRecoveryError("Não encontrámos nenhum voluntário com esse email. Verifique ou inscreva-se.");
+      if (!data?.ok || !data?.exists) {
+        setRecoveryError(data?.error || "Não encontrámos nenhum voluntário com esse email. Verifique ou inscreva-se.");
       } else {
         setContributorName(data.name || "");
         setAuthStep(data.has_password ? "login" : "set-password");
@@ -157,10 +157,10 @@ const Portal = () => {
         body: { email: recoveryEmail.trim(), password, action },
       });
       const data = res.data;
-      if (res.error || data?.error) {
-        setRecoveryError(data?.error || "Erro ao autenticar.");
-      } else if (data?.token) {
+      if (data?.ok && data?.token) {
         window.location.href = `/portal?token=${data.token}`;
+      } else {
+        setRecoveryError(data?.error || res.error?.message || "Erro ao autenticar.");
       }
     } catch {
       setRecoveryError("Erro de ligação. Tente novamente.");
