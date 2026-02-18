@@ -172,6 +172,14 @@ const AllocateVolunteerDialog = ({
 
     queryClient.invalidateQueries({ queryKey: ["admin-parts"] });
     queryClient.invalidateQueries({ queryKey: ["admin-projects"] });
+
+    // Send email notification — fire and forget, don't block UI on failure
+    supabase.functions.invoke("notify-part-allocated", {
+      body: { contributor_id: contributor.id, part_ids: partIds },
+    }).catch(() => {
+      // Silently ignore — allocation already succeeded
+    });
+
     setSaving(false);
     setAllocated(true);
   };
