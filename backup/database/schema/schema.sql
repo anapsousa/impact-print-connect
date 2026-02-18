@@ -101,7 +101,8 @@ CREATE TABLE parts (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     category text,
-    material text
+    material text,
+    file_url text
 );
 
 -- Part templates table

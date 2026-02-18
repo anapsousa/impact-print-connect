@@ -199,6 +199,7 @@ export type Database = {
           assigned_contributor_id: string | null
           category: string | null
           created_at: string
+          file_url: string | null
           id: string
           material: string | null
           part_name: string
@@ -210,6 +211,7 @@ export type Database = {
           assigned_contributor_id?: string | null
           category?: string | null
           created_at?: string
+          file_url?: string | null
           id?: string
           material?: string | null
           part_name: string
@@ -221,6 +223,7 @@ export type Database = {
           assigned_contributor_id?: string | null
           category?: string | null
           created_at?: string
+          file_url?: string | null
           id?: string
           material?: string | null
           part_name?: string

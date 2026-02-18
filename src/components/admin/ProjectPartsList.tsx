@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -11,7 +12,7 @@ import {
 import PartAssignmentSelect from "./PartAssignmentSelect";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { Loader2, Link, ExternalLink } from "lucide-react";
 
 interface Part {
   id: string;
@@ -19,6 +20,7 @@ interface Part {
   status: string;
   category?: string | null;
   material?: string | null;
+  file_url?: string | null;
   assigned_contributor_id: string | null;
 }
 
@@ -61,6 +63,8 @@ const ProjectPartsList = ({ parts, contributors }: ProjectPartsListProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [editingUrlId, setEditingUrlId] = useState<string | null>(null);
+  const [urlDraft, setUrlDraft] = useState<string>("");
 
   const grouped = {
     Estrutura: parts.filter((p) => p.category === "Estrutura"),
@@ -97,6 +101,17 @@ const ProjectPartsList = ({ parts, contributors }: ProjectPartsListProps) => {
     updatePart(partId, updates);
   };
 
+  const startEditUrl = (part: Part) => {
+    setEditingUrlId(part.id);
+    setUrlDraft(part.file_url ?? "");
+  };
+
+  const handleSaveUrl = async (partId: string) => {
+    await updatePart(partId, { file_url: urlDraft.trim() || null });
+    setEditingUrlId(null);
+    setUrlDraft("");
+  };
+
   const renderGroup = (title: string, groupParts: Part[]) => {
     if (groupParts.length === 0) return null;
     return (
@@ -120,6 +135,45 @@ const ProjectPartsList = ({ parts, contributors }: ProjectPartsListProps) => {
                   <Badge className={`text-[10px] shrink-0 ${materialColor[part.material] ?? ""}`}>
                     {part.material}
                   </Badge>
+                )}
+                {editingUrlId === part.id ? (
+                  <div className="flex items-center gap-1 min-w-0 flex-1">
+                    <Input
+                      className="h-7 text-xs flex-1"
+                      placeholder="https://drive.google.com/..."
+                      value={urlDraft}
+                      onChange={(e) => setUrlDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleSaveUrl(part.id);
+                        if (e.key === "Escape") { setEditingUrlId(null); setUrlDraft(""); }
+                      }}
+                      autoFocus
+                    />
+                    <button
+                      className="text-xs text-accent hover:underline shrink-0"
+                      onClick={() => handleSaveUrl(part.id)}
+                    >
+                      Guardar
+                    </button>
+                    <button
+                      className="text-xs text-muted-foreground hover:underline shrink-0"
+                      onClick={() => { setEditingUrlId(null); setUrlDraft(""); }}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    className="shrink-0 ml-1"
+                    title={part.file_url ? "Editar link do ficheiro" : "Adicionar link do ficheiro"}
+                    onClick={() => startEditUrl(part)}
+                  >
+                    {part.file_url ? (
+                      <ExternalLink className="w-3.5 h-3.5 text-accent hover:text-accent/70" />
+                    ) : (
+                      <Link className="w-3.5 h-3.5 text-muted-foreground hover:text-accent" />
+                    )}
+                  </button>
                 )}
               </div>
               <div className="flex items-center gap-2 shrink-0">
