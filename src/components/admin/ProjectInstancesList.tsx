@@ -278,8 +278,20 @@ const ProjectInstancesList = () => {
       }
     }
 
+    // 3. Update request status to em_andamento
+    const { error: reqError } = await supabase
+      .from("beneficiary_requests")
+      .update({ status: "em_andamento" })
+      .eq("id", newRequestId);
+
+    if (reqError) {
+      console.error("Failed to update request status:", reqError);
+    }
+
     toast({ title: "Projeto criado!", description: `${newProjectName} criado com ${templateParts?.length ?? 0} peças.` });
     queryClient.invalidateQueries({ queryKey: ["project-instances"] });
+    queryClient.invalidateQueries({ queryKey: ["open-requests"] });
+    queryClient.invalidateQueries({ queryKey: ["beneficiary-requests"] });
     setShowCreateDialog(false);
     setNewProjectName("");
     setNewInitiativeId("");
@@ -289,15 +301,44 @@ const ProjectInstancesList = () => {
 
   // Update project status
   const handleProjectStatusChange = async (projectId: string, status: string) => {
+    const project = projects.find((p) => p.id === projectId);
+
     const { error } = await supabase
       .from("project_instances")
       .update({ status: status as "planning" | "in_progress" | "completed" | "cancelled" })
       .eq("id", projectId);
+
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
-    } else {
-      queryClient.invalidateQueries({ queryKey: ["project-instances"] });
+      return;
     }
+
+    // Update request status based on project status
+    if (project?.request_id) {
+      let requestStatus: string | null = null;
+
+      if (status === "in_progress") {
+        requestStatus = "em_andamento";
+      } else if (status === "completed") {
+        requestStatus = "concluido";
+      } else if (status === "cancelled") {
+        requestStatus = "cancelado";
+      }
+
+      if (requestStatus) {
+        const { error: reqError } = await supabase
+          .from("beneficiary_requests")
+          .update({ status: requestStatus })
+          .eq("id", project.request_id);
+
+        if (reqError) {
+          console.error("Failed to update request status:", reqError);
+        }
+      }
+    }
+
+    queryClient.invalidateQueries({ queryKey: ["project-instances"] });
+    queryClient.invalidateQueries({ queryKey: ["beneficiary-requests"] });
   };
 
   // Assign contributor to part
