@@ -83,9 +83,11 @@ type ProjectCardProject = Tables<"project_instances"> & {
 const ProjectCard = ({
   project,
   onSelect,
+  isSelected = false,
 }: {
   project: ProjectCardProject;
   onSelect: () => void;
+  isSelected?: boolean;
 }) => {
   const { data: partCounts } = useQuery({
     queryKey: ["project-instance-part-counts", project.id],
@@ -106,44 +108,39 @@ const ProjectCard = ({
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
 
   return (
-    <div className="bg-card border border-border rounded-xl p-4">
-      <div className="flex items-start gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-medium text-sm">{project.name}</span>
-            <Badge className={`text-[10px] ${statusColors[project.status] ?? ""}`}>
-              {statusLabels[project.status] ?? project.status}
-            </Badge>
-          </div>
-          <div className="text-xs text-muted-foreground mt-0.5 space-y-0.5">
-            {project.initiatives?.name && <p>{project.initiatives.name}</p>}
-            {project.beneficiary_requests?.contact_name && (
-              <p>Pedido: {project.beneficiary_requests.contact_name} — {project.beneficiary_requests.region}</p>
-            )}
-          </div>
-          {total > 0 && (
-            <div className="mt-2">
-              <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1">
-                <span>{done}/{total} peças concluídas</span>
-                <span>{pct}%</span>
-              </div>
-              <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-primary rounded-full transition-all"
-                  style={{ width: `${pct}%` }}
-                />
-              </div>
-            </div>
-          )}
-        </div>
-        <button
-          onClick={onSelect}
-          className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 rounded-lg transition-colors shrink-0 mt-0.5"
-        >
-          Ver peças <ChevronRight className="w-3.5 h-3.5" />
-        </button>
+    <button
+      onClick={onSelect}
+      className={`w-full text-left bg-card border rounded-xl p-4 transition-all ${
+        isSelected ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+      }`}
+    >
+      <div className="flex items-center gap-2 flex-wrap mb-1">
+        <span className="font-medium text-sm">{project.name}</span>
+        <Badge className={`text-[10px] ${statusColors[project.status] ?? ""}`}>
+          {statusLabels[project.status] ?? project.status}
+        </Badge>
       </div>
-    </div>
+      <div className="text-xs text-muted-foreground space-y-0.5">
+        {project.initiatives?.name && <p>{project.initiatives.name}</p>}
+        {project.beneficiary_requests?.contact_name && (
+          <p>Pedido: {project.beneficiary_requests.contact_name} — {project.beneficiary_requests.region}</p>
+        )}
+      </div>
+      {total > 0 && (
+        <div className="mt-2">
+          <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1">
+            <span>{done}/{total} peças concluídas</span>
+            <span>{pct}%</span>
+          </div>
+          <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+            <div
+              className="h-full bg-primary rounded-full transition-all"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+        </div>
+      )}
+    </button>
   );
 };
 
@@ -317,7 +314,9 @@ const ProjectInstancesList = () => {
     if (project?.request_id) {
       let requestStatus: string | null = null;
 
-      if (status === "in_progress") {
+      if (status === "planning") {
+        requestStatus = "aprovado"; // Back to approved when planning
+      } else if (status === "in_progress") {
         requestStatus = "em_andamento";
       } else if (status === "completed") {
         requestStatus = "concluido";
@@ -387,123 +386,10 @@ const ProjectInstancesList = () => {
     setUpdatingPartId(null);
   };
 
-  // --- PROJECT PARTS DETAIL VIEW ---
-  if (selectedId && selectedProject) {
-    const assignedCount = parts.filter((p) => p.status !== "unassigned").length;
-    return (
-      <div className="space-y-4">
-        {/* Header */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setSelectedId(null)}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
-          >
-            <ChevronLeft className="w-4 h-4" /> Projetos
-          </button>
-          <span className="text-muted-foreground">/</span>
-          <span className="text-sm font-medium">{selectedProject.name}</span>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-semibold text-foreground">{selectedProject.name}</h3>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              {selectedProject.initiatives?.name} · {assignedCount}/{parts.length} peças atribuídas
-            </p>
-            {selectedProject.beneficiary_requests?.contact_name && (
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Pedido: {selectedProject.beneficiary_requests.contact_name} — {selectedProject.beneficiary_requests.region}
-              </p>
-            )}
-          </div>
-          <Select
-            value={selectedProject.status}
-            onValueChange={(v) => handleProjectStatusChange(selectedProject.id, v)}
-          >
-            <SelectTrigger className="w-36 h-8 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {PROJECT_STATUSES.map((s) => (
-                <SelectItem key={s} value={s} className="text-xs">{statusLabels[s]}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {loadingParts ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-          </div>
-        ) : parts.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <Package className="w-8 h-8 mx-auto mb-3 opacity-40" />
-            <p className="text-sm">Sem peças neste projeto.</p>
-          </div>
-        ) : (
-          <div className="border border-border rounded-xl overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50">
-                <tr>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">Peça</th>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">Material</th>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">Estado</th>
-                  <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">Voluntário</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {parts.map((part) => (
-                  <tr key={part.id} className="bg-card hover:bg-muted/20 transition-colors">
-                    <td className="px-4 py-3">
-                      <div className="font-medium">{part.part_name}</div>
-                      {part.category && <div className="text-xs text-muted-foreground">{part.category}</div>}
-                    </td>
-                    <td className="px-4 py-3">
-                      {part.material && <Badge variant="secondary" className="text-[10px]">{part.material}</Badge>}
-                    </td>
-                    <td className="px-4 py-3">
-                      {updatingPartId === part.id ? (
-                        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-                      ) : (
-                        <Select
-                          value={part.status}
-                          onValueChange={(v) => handlePartStatusChange(part.id, v)}
-                        >
-                          <SelectTrigger className="w-36 h-7 text-xs">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Object.entries(partStatusLabels).map(([value, label]) => (
-                              <SelectItem key={value} value={value} className="text-xs">{label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      {updatingPartId === part.id ? (
-                        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-                      ) : (
-                        <PartAssignmentSelect
-                          value={part.assigned_contributor_id}
-                          contributors={contributors}
-                          onAssign={(contributorId) => handleAssignPart(part.id, contributorId)}
-                        />
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // --- PROJECT LIST VIEW ---
+  // --- LAYOUT: side-by-side (list + detail) ---
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Create dialog button */}
       <div className="flex items-center justify-between">
         <div>
           <h3 className="font-semibold text-foreground">Projetos</h3>
@@ -520,26 +406,141 @@ const ProjectInstancesList = () => {
         </div>
       )}
 
-      {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      {/* Side-by-side layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* LEFT: project list (1 column) */}
+        <div className="lg:col-span-1 space-y-3">
+          <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">Projetos ({projects.length})</h3>
+          {isLoading ? (
+            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground mx-auto" />
+          ) : projects.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">Sem projetos. Crie o primeiro acima!</p>
+          ) : (
+            projects.map((project) => (
+              <ProjectCard
+                key={project.id}
+                project={project}
+                onSelect={() => setSelectedId(project.id === selectedId ? null : project.id)}
+                isSelected={project.id === selectedId}
+              />
+            ))
+          )}
         </div>
-      ) : projects.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          <Package className="w-8 h-8 mx-auto mb-3 opacity-40" />
-          <p className="text-sm">Sem projetos ainda. Cria o primeiro acima.</p>
+
+        {/* RIGHT: project detail (2 columns) */}
+        <div className="lg:col-span-2">
+          {selectedProject ? (
+            <div className="bg-card rounded-2xl border border-border p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <button onClick={() => setSelectedId(null)} className="lg:hidden text-muted-foreground hover:text-foreground">
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-1">
+                    <h3 className="text-lg font-bold text-foreground">{selectedProject.name}</h3>
+                    <Select
+                      value={selectedProject.status}
+                      onValueChange={(v) => handleProjectStatusChange(selectedProject.id, v)}
+                    >
+                      <SelectTrigger className="w-36 h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PROJECT_STATUSES.map((s) => (
+                          <SelectItem key={s} value={s} className="text-xs">{statusLabels[s]}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {selectedProject.initiatives?.name} · {parts.filter((p) => p.status !== "unassigned").length}/{parts.length} peças atribuídas ·{" "}
+                    {parts.filter((p) => ["printed", "shipped", "complete"].includes(p.status)).length} concluídas
+                  </p>
+                  {selectedProject.beneficiary_requests?.contact_name && (
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Pedido: {selectedProject.beneficiary_requests.contact_name} — {selectedProject.beneficiary_requests.region}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {loadingParts ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : parts.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Package className="w-8 h-8 mx-auto mb-3 opacity-40" />
+                  <p className="text-sm">Sem peças neste projeto.</p>
+                </div>
+              ) : (
+                <div className="border border-border rounded-xl overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">Peça</th>
+                        <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">Material</th>
+                        <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">Estado</th>
+                        <th className="text-left px-4 py-2.5 text-xs font-medium text-muted-foreground">Voluntário</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {parts.map((part) => (
+                        <tr key={part.id} className="bg-card hover:bg-muted/20 transition-colors">
+                          <td className="px-4 py-3">
+                            <div className="font-medium">{part.part_name}</div>
+                            {part.category && <div className="text-xs text-muted-foreground">{part.category}</div>}
+                          </td>
+                          <td className="px-4 py-3">
+                            {part.material && <Badge variant="secondary" className="text-[10px]">{part.material}</Badge>}
+                          </td>
+                          <td className="px-4 py-3">
+                            {updatingPartId === part.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                            ) : (
+                              <Select
+                                value={part.status}
+                                onValueChange={(v) => handlePartStatusChange(part.id, v)}
+                              >
+                                <SelectTrigger className="w-36 h-7 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {Object.entries(partStatusLabels).map(([value, label]) => (
+                                    <SelectItem key={value} value={value} className="text-xs">{label}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            {updatingPartId === part.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                            ) : (
+                              <PartAssignmentSelect
+                                value={part.assigned_contributor_id}
+                                contributors={contributors}
+                                onAssign={(contributorId) => handleAssignPart(part.id, contributorId)}
+                              />
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="bg-card rounded-2xl border border-border p-12 flex items-center justify-center">
+              <div className="text-center text-muted-foreground">
+                <Package className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                <p className="text-sm">Seleciona um projeto para ver as peças</p>
+              </div>
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="space-y-2">
-          {projects.map((project) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              onSelect={() => setSelectedId(project.id)}
-            />
-          ))}
-        </div>
-      )}
+      </div>
 
       {/* Create project dialog */}
       <Dialog open={showCreateDialog} onOpenChange={(open) => { setShowCreateDialog(open); if (!open) { setNewProjectName(""); setNewInitiativeId(""); setNewRequestId(""); } }}>
