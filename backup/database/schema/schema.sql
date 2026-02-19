@@ -33,7 +33,8 @@ CREATE TYPE project_status AS ENUM (
 CREATE TYPE user_role AS ENUM (
     'admin',
     'coordinator',
-    'volunteer'
+    'volunteer',
+    'organizer'
 );
 
 -- ============================================
