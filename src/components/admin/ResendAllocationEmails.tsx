@@ -32,7 +32,7 @@ export const ResendAllocationEmails = ({ projectId, projectName }: ResendAllocat
   const [results, setResults] = useState<{ success: number; failed: number }>({ success: 0, failed: 0 });
 
   // Fetch allocated parts for THIS PROJECT ONLY, grouped by contributor
-  const { data: allocations = [], isLoading } = useQuery({
+  const { data: allocations = [], isLoading, refetch } = useQuery({
     queryKey: ["allocated-parts-for-resend", projectId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -59,7 +59,6 @@ export const ResendAllocationEmails = ({ projectId, projectName }: ResendAllocat
         partsCount: partIds.length,
       }));
     },
-    enabled: false, // Only fetch when user opens dialog
   });
 
   const handleResendAll = async () => {
