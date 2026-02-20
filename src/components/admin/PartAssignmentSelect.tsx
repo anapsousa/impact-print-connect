@@ -24,6 +24,7 @@ interface PartAssignmentSelectProps {
   contributors: Contributor[];
   onAssign: (contributorId: string | null) => void;
   disabled?: boolean;
+  allocatedContributorIds?: string[]; // IDs of contributors already allocated in this project
 }
 
 const regionLabels: Record<string, string> = {
@@ -36,7 +37,7 @@ const regionLabels: Record<string, string> = {
   madeira: "Madeira",
 };
 
-const PartAssignmentSelect = ({ value, contributors, onAssign, disabled }: PartAssignmentSelectProps) => {
+const PartAssignmentSelect = ({ value, contributors, onAssign, disabled, allocatedContributorIds = [] }: PartAssignmentSelectProps) => {
   // Group contributors by region
   const grouped = contributors.reduce<Record<string, Contributor[]>>((acc, c) => {
     const region = c.region || "outro";
@@ -70,8 +71,9 @@ const PartAssignmentSelect = ({ value, contributors, onAssign, disabled }: PartA
               const expLabel = c.experience_level === "expert" ? "⭐" : c.experience_level === "beginner" ? "🔰" : "";
               const volWarn = c.build_volume_ok === false ? " ⚠️" : "";
               const plate = c.build_plate_size ? ` · ${c.build_plate_size}` : "";
+              const isAllocated = allocatedContributorIds.includes(c.id);
               return (
-                <SelectItem key={c.id} value={c.id}>
+                <SelectItem key={c.id} value={c.id} disabled={isAllocated}>
                   {expLabel}{c.name} · {c.printer_models?.join(", ") || "—"}{plate} {c.materials?.length ? `· ${c.materials.join("/")}` : ""}{volWarn}
                 </SelectItem>
               );

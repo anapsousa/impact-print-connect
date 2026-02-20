@@ -226,6 +226,22 @@ const ProjectInstancesList = () => {
     },
   });
 
+  // Fetch IDs of contributors already allocated in selected project
+  const { data: allocatedContributorIds = [] } = useQuery({
+    queryKey: ["allocated-contributor-ids", selectedId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("project_instance_parts")
+        .select("assigned_contributor_id")
+        .eq("project_instance_id", selectedId!)
+        .not("assigned_contributor_id", "is", null);
+      if (error) throw error;
+      // Return unique IDs
+      return [...new Set(data.map((p) => p.assigned_contributor_id!))];
+    },
+    enabled: !!selectedId,
+  });
+
   const selectedProject = projects.find((p) => p.id === selectedId);
 
   // Create project from initiative
@@ -525,6 +541,7 @@ const ProjectInstancesList = () => {
                                 value={part.assigned_contributor_id}
                                 contributors={contributors}
                                 onAssign={(contributorId) => handleAssignPart(part.id, contributorId)}
+                                allocatedContributorIds={allocatedContributorIds}
                               />
                             )}
                           </td>
