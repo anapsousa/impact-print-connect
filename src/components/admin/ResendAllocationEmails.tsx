@@ -81,6 +81,9 @@ export const ResendAllocationEmails = ({ projectId, projectName }: ResendAllocat
       try {
         const { error } = await supabase.functions.invoke("notify-part-allocated", {
           body: { contributor_id: contributorId, part_ids: partIds },
+          headers: {
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
         });
 
         if (error) {
