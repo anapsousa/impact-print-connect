@@ -211,8 +211,8 @@ const Admin = () => {
         </div>
       </header>
 
-      <div className="pt-20 pb-12 px-6">
-        <div className="max-w-6xl mx-auto">
+      <div className="pt-20 pb-12 px-6 lg:px-8">
+        <div className="max-w-[1600px] mx-auto">
           <h1 className="text-3xl font-black text-foreground mb-1">Controlo de Missão</h1>
           <p className="text-muted-foreground mb-8">Bem-vindo, Comandante. Aqui está o estado das operações.</p>
 
